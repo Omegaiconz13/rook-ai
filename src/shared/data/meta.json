@@ -1,0 +1,12 @@
+{
+  "source": "yfinance",
+  "provider": "Yahoo Finance",
+  "interval": "5m",
+  "timezone": "America/New_York",
+  "sessionDate": "2026-11-19",
+  "fetchedAt": "2026-11-19T18:36:32Z",
+  "delayed": true,
+  "partialSession": true,
+  "sessions": 30,
+  "note": "Delayed Yahoo Finance bars fetched with the yfinance package at build time."
+}

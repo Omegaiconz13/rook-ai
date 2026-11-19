@@ -13,7 +13,7 @@ export function PricingPlans({ heading = true, as = 'h2' }: { heading?: boolean;
     <section id="pricing" className="py-24 md:py-32">
       <Container>
         <div className="flex flex-wrap items-end justify-between gap-8">
-          {heading && <SectionHeading as={as} eyebrow="Pricing" title="Free for one course. Fair for all of them." lede="Students get the yearly price with any school email." />}
+          {heading && <SectionHeading as={as} eyebrow="Pricing" title="Free to learn the routine. Paid to feed it." lede="Every plan is paper-only. Yearly billing saves about a fifth." />}
           <Segmented
             label="Billing period"
             value={billing}

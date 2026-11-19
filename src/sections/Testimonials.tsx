@@ -8,7 +8,7 @@ export function Testimonials() {
   return (
     <section className="py-24 md:py-32" aria-labelledby="t-title">
       <Container>
-        <SectionHeading eyebrow="Students" title={<span id="t-title">Less rereading, more remembering</span>} />
+        <SectionHeading eyebrow="Traders" title={<span id="t-title">The refusals are the part they keep</span>} />
         <div className="mt-14 grid gap-5 md:grid-cols-3">
           {TESTIMONIALS.map((t, i) => (
             <Reveal key={t.name} delay={i * 90}>

@@ -7,8 +7,8 @@ import { Input } from '../components/Field'
 import { Notice } from '../components/Notice'
 import { AUTH } from '../content'
 import { postJson } from '../lib/api'
-import { useUser } from '../lib/library'
-import type { User } from '../lib/library'
+import { useUser } from '../lib/desk'
+import type { User } from '../lib/desk'
 import { Link, navigate } from '../lib/router'
 import type { Errors } from '../shared/validate'
 import { validateLogin } from '../shared/validate'
@@ -43,7 +43,7 @@ export function Login() {
       lede={AUTH.loginLede}
       footer={
         <>
-          New to Cramly?{' '}
+          New here?{' '}
           <Link href="/signup" className="inline-flex min-h-10 items-center text-leaf-text underline underline-offset-4">
             Create an account
           </Link>

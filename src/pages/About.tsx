@@ -19,7 +19,7 @@ export function About() {
       <PageIntro eyebrow={ABOUT.eyebrow} title={ABOUT.title} lede={ABOUT.lede} />
       <Container>
         <div className="overflow-hidden rounded-[32px] border border-line">
-          <Photo src={IMAGES.about} alt="A quiet study desk at night with open notebooks and a lamp" className="aspect-[16/8] w-full object-cover" />
+          <Photo src={IMAGES.about} alt="A trading desk at night, lit by charts on three monitors" className="aspect-[16/8] w-full object-cover" />
         </div>
         <dl className="mt-12 grid grid-cols-3 gap-6 border-b border-line pb-12">
           {ABOUT.numbers.map((n) => (
@@ -92,7 +92,7 @@ function ContactForm() {
         <Input label="Name" autoComplete="name" value={v.name} onChange={set('name')} error={errors.name} />
         <Input label="Email" type="email" autoComplete="email" value={v.email} onChange={set('email')} error={errors.email} />
       </div>
-      <Textarea label="Message" rows={5} value={v.message} onChange={set('message')} error={errors.message} hint="School partnerships, press or anything else." />
+      <Textarea label="Message" rows={5} value={v.message} onChange={set('message')} error={errors.message} hint="Trading rooms, press or anything else." />
       {status === 'failed' && <Notice tone="error">{failure}</Notice>}
       <Button type="submit" variant="paper" size="lg" loading={busy} className="justify-self-start">
         Send message

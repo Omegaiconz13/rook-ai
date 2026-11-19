@@ -6,7 +6,7 @@ import { GlyphRow } from '../components/Glyphs'
 import { Logo } from '../components/Logo'
 import { NAV } from '../content'
 import { cx } from '../lib/cx'
-import { useUser } from '../lib/library'
+import { useUser } from '../lib/desk'
 import { Link, isCurrent, useLocation } from '../lib/router'
 import { useFocusTrap } from '../lib/useFocusTrap'
 

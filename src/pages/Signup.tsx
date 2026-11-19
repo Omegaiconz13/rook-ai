@@ -8,8 +8,8 @@ import { Checkbox, Input, Select } from '../components/Field'
 import { Notice } from '../components/Notice'
 import { AUTH, PLANS } from '../content'
 import { postJson } from '../lib/api'
-import { useUser } from '../lib/library'
-import type { User } from '../lib/library'
+import { useUser } from '../lib/desk'
+import type { User } from '../lib/desk'
 import { Link, navigate, useLocation } from '../lib/router'
 import type { Errors } from '../shared/validate'
 import { LEVELS, validateSignup } from '../shared/validate'
@@ -65,7 +65,7 @@ export function Signup() {
         <Input id="su-name" label="Name" autoComplete="name" value={v.name} onChange={(e) => set('name', e.target.value)} error={errors.name} />
         <Input id="su-email" label="Email" type="email" autoComplete="email" value={v.email} onChange={(e) => set('email', e.target.value)} error={errors.email} />
         <Input id="su-password" label="Password" type="password" autoComplete="new-password" value={v.password} onChange={(e) => set('password', e.target.value)} error={errors.password} hint="8 or more characters, with a number." />
-        <Select id="su-level" label="Where do you study?" value={v.level} onChange={(e) => set('level', e.target.value)} error={errors.level}>
+        <Select id="su-level" label="How long have you been trading?" value={v.level} onChange={(e) => set('level', e.target.value)} error={errors.level}>
           <option value="" disabled>
             Choose one
           </option>

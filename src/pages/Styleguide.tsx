@@ -4,15 +4,15 @@ import { ArrowRight, FileUp, Plus, Upload } from 'lucide-react'
 
 import { Accordion } from '../components/Accordion'
 import { Avatar } from '../components/Avatar'
+import { BarChart } from '../components/BarChart'
 import { Badge, Eyebrow } from '../components/Badge'
 import { Button, IconButton } from '../components/Button'
 import type { Force, Variant } from '../components/Button'
 import { ChatBubble } from '../components/ChatBubble'
 import { Container } from '../components/Container'
 import { EmptyState } from '../components/EmptyState'
+import { Disclaimer } from '../components/Disclaimer'
 import { Checkbox, Input, Select, Textarea } from '../components/Field'
-import { FileIcon } from '../components/FileIcon'
-import { FileStack } from '../components/FileStack'
 import { GlyphRow } from '../components/Glyphs'
 import { Kbd } from '../components/Kbd'
 import { Logo } from '../components/Logo'
@@ -20,11 +20,50 @@ import { Modal } from '../components/Modal'
 import { Notice } from '../components/Notice'
 import { PlanCard } from '../components/PlanCard'
 import { ProgressBar, ScoreRing } from '../components/Progress'
+import { SeatCard } from '../components/SeatCard'
 import { Segmented } from '../components/Segmented'
 import { Skeleton } from '../components/Skeleton'
+import { SourceBadge } from '../components/SourceBadge'
+import { StatTile } from '../components/StatTile'
 import { useToast } from '../components/Toast'
+import { TradeCard } from '../components/TradeCard'
 import { TypingDots } from '../components/TypingDots'
+import { GateVerdictCard, VerdictPill } from '../components/Verdict'
 import { FAQ, PLANS } from '../content'
+import { barsFor } from '../shared/fixtures'
+import type { SeatNote } from '../shared/packet'
+import type { GateVerdict } from '../shared/risk'
+
+const APPROVED: GateVerdict = {
+  planId: 'styleguide',
+  verdict: 'approved',
+  ruleId: null,
+  reason: 'Approved 6 shares; position cap set the size.',
+  size: 6,
+  decidingLimit: 'position-cap',
+  lossAtStopCents: 3516,
+  rewardRisk: 2,
+}
+
+const BLOCKED: GateVerdict = {
+  planId: 'styleguide',
+  verdict: 'blocked',
+  ruleId: 'R-12',
+  reason: 'Reward:risk is 1.00, below your 1.50 minimum.',
+  size: null,
+  decidingLimit: null,
+  lossAtStopCents: null,
+  rewardRisk: 1,
+}
+
+const SEAT: SeatNote = {
+  role: 'bear',
+  title: 'The case against',
+  verdict: 'block',
+  reason: 'The target needs a clean break of yesterday\u2019s high, forty points above the entry.',
+  evidence: ['priorHigh 36,760', 'target 37,590', 'range high 36,218'],
+  packetRef: 'packet.levels.targetCents',
+}
 
 const COLORS = [
   { name: 'bg', hex: '#050906', use: 'Page background' },
@@ -101,10 +140,10 @@ export function Styleguide() {
   return (
     <Container className="py-16">
       <Eyebrow>Design system</Eyebrow>
-      <h1 className="mt-4 text-[clamp(40px,5vw,64px)] font-normal tracking-[-0.05em]">Cramly style guide</h1>
+      <h1 className="mt-4 text-[clamp(40px,5vw,64px)] font-normal tracking-[-0.05em]">Rook style guide</h1>
       <p className="mt-4 max-w-2xl text-[17px] text-muted">Every token and component, rendered by the real code. Tokens live in src/styles.css; components in src/components.</p>
       <nav aria-label="Sections" className="mt-8 flex flex-wrap gap-2">
-        {['colour', 'type', 'space', 'radii', 'shadow', 'motion', 'buttons', 'fields', 'feedback', 'content'].map((s) => (
+        {['colour', 'type', 'space', 'radii', 'shadow', 'motion', 'buttons', 'fields', 'feedback', 'desk', 'content'].map((s) => (
           <a key={s} href={`#${s}`} className="btn btn-glass btn-sm h-10 capitalize">
             {s}
           </a>
@@ -136,7 +175,7 @@ export function Styleguide() {
                 <br />
                 {t.spec}
               </p>
-              <p className={`${t.cls} min-w-0 truncate`}>Study smarter, not longer</p>
+              <p className={`${t.cls} min-w-0 truncate`}>The rule set the level</p>
             </div>
           ))}
           <p className="text-[56px] leading-none tracking-[-0.06em]">
@@ -178,7 +217,7 @@ export function Styleguide() {
           ))}
         </div>
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <div className="glass rounded-[22px] p-6 text-[14px] text-soft">.glass: frosted green tint, used by the file stack, chat and quiz.</div>
+          <div className="glass rounded-[22px] p-6 text-[14px] text-soft">.glass: frosted green tint, used by the trade card, the chat bubbles and the memo strip.</div>
           <div className="panel rounded-[22px] p-6 text-[14px] text-soft">.panel: solid surface with a hairline border.</div>
         </div>
       </Block>
@@ -265,17 +304,17 @@ export function Styleguide() {
 
       <Block title="Fields" id="fields">
         <div className="grid gap-6 md:grid-cols-3">
-          <Input label="Default" placeholder="you@school.edu" />
-          <Input label="Hover" placeholder="you@school.edu" force="hover" />
-          <Input label="Focus" placeholder="you@school.edu" force="focus" />
-          <Input label="With hint" hint="We never share your email." defaultValue="sam@uni.edu" />
-          <Input label="Error" defaultValue="sam@uni" error="Enter a valid email, like you@school.edu." />
+          <Input label="Default" placeholder="you@yourdesk.app" />
+          <Input label="Hover" placeholder="you@yourdesk.app" force="hover" />
+          <Input label="Focus" placeholder="you@yourdesk.app" force="focus" />
+          <Input label="With hint" hint="We never share your email." defaultValue="sam@rookdesk.app" />
+          <Input label="Error" defaultValue="sam@desk" error="Enter a valid email, like you@yourdesk.app." />
           <Input label="Disabled" disabled defaultValue="Locked" />
-          <Select label="Select" defaultValue="University">
-            <option>High school</option>
-            <option>University</option>
+          <Select label="Select" defaultValue="Intraday">
+            <option>Intraday</option>
+            <option>Swing</option>
           </Select>
-          <Textarea label="Textarea" rows={3} placeholder="Ask about this file…" />
+          <Textarea label="Textarea" rows={3} placeholder="Ask about this trade…" />
           <div className="grid content-start gap-4 pt-7">
             <Checkbox label="Checked" defaultChecked />
             <Checkbox label="Unchecked" />
@@ -286,14 +325,14 @@ export function Styleguide() {
 
       <Block title="Feedback and states" id="feedback">
         <div className="grid gap-4 md:grid-cols-3">
-          <Notice tone="success">Your study pack is ready.</Notice>
-          <Notice tone="error">Files can be up to 25 MB on the free plan.</Notice>
-          <Notice tone="info">Only the file name and size leave your browser.</Notice>
+          <Notice tone="success">The memo is in the journal.</Notice>
+          <Notice tone="error">The gate is unavailable until the feed reconnects.</Notice>
+          <Notice tone="info">Nothing leaves this browser; the session ships with the app.</Notice>
         </div>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Badge>Neutral</Badge>
           <Badge tone="leaf">Leaf</Badge>
-          <Badge tone="amber">3 cards due</Badge>
+          <Badge tone="amber">3 trades today</Badge>
           <Badge tone="danger">Danger</Badge>
           <Kbd>Space</Kbd>
           <TypingDots />
@@ -337,20 +376,45 @@ export function Styleguide() {
         </Modal>
       </Block>
 
+      <Block title="Desk components" id="desk">
+        <div className="grid gap-6 xl:grid-cols-2">
+          <GateVerdictCard verdict={APPROVED} />
+          <GateVerdictCard verdict={BLOCKED} />
+        </div>
+        <ul className="mt-6 grid gap-4 md:grid-cols-2">
+          <SeatCard note={SEAT} index={4} />
+        </ul>
+        <div className="mt-6">
+          <BarChart
+            bars={barsFor('TSLA')}
+            rangeHigh={36_218}
+            rangeLow={35_447}
+            entry={36_418}
+            stop={35_832}
+            target={37_590}
+          />
+        </div>
+      </Block>
+
       <Block title="Content components" id="content">
         <div className="grid gap-10 lg:grid-cols-2">
           <div className="grid gap-4">
-            <ChatBubble from="you" text="What is the difference between mitosis and meiosis?" />
-            <ChatBubble from="cramly" text="Mitosis makes **two identical cells**; meiosis makes **four different** ones." cite="p. 3" />
-            <ChatBubble from="cramly" text="You appear to be offline." error onRetry={() => toast('Retrying')} />
+            <ChatBubble from="you" text="Did TSLA break the opening range?" />
+            <ChatBubble from="desk" text="Yes: the 10:10 bar closed at **364.18**, above the 362.18 range high." cite="packet.setup.rangeHighCents" />
+            <ChatBubble from="desk" text="The feed is unavailable." error onRetry={() => toast('Retrying')} />
           </div>
-          <div className="grid justify-items-start gap-6">
-            <FileStack />
-            <div className="flex gap-2">
-              {(['pdf', 'doc', 'png', 'txt', 'ppt'] as const).map((k) => (
-                <FileIcon key={k} kind={k} />
-              ))}
+          <div className="grid justify-items-start gap-5">
+            <div className="flex flex-wrap items-center gap-3">
+              <SourceBadge source="seed" />
+              <VerdictPill verdict="approved" />
+              <VerdictPill verdict="blocked" />
             </div>
+            <div className="grid w-full grid-cols-2 gap-3">
+              <StatTile label="Setups triggered" value={3} hint="of 8 in the scan" />
+              <StatTile label="Risk left" value="$150.00" hint="of $150.00 daily" />
+            </div>
+            <TradeCard />
+            <Disclaimer />
             <div className="flex items-center gap-6">
               <Logo withName />
               <GlyphRow />

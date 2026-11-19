@@ -1,5 +1,7 @@
 node_modules
 dist
+.venv-data
+__pycache__
 .wrangler
 .dev.vars
 .dev.vars.*

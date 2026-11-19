@@ -3,7 +3,7 @@ import type { ComponentType, ReactNode } from 'react'
 
 import { ToastProvider } from './components/Toast'
 import { BRAND } from './content'
-import { scrollToHash, useLocation } from './lib/router'
+import { match, scrollToHash, useLocation } from './lib/router'
 import { Home } from './pages/Home'
 import { NotFound } from './pages/NotFound'
 import { Footer } from './sections/Footer'
@@ -17,14 +17,17 @@ const Login = page(() => import('./pages/Login'), 'Login')
 const Signup = page(() => import('./pages/Signup'), 'Signup')
 const Styleguide = page(() => import('./pages/Styleguide'), 'Styleguide')
 const AppShell = lazy(() => import('./pages/app/AppShell').then((m) => ({ default: m.AppShell })))
-const LibraryPage = page(() => import('./pages/app/Library'), 'LibraryPage')
-const ChatPage = page(() => import('./pages/app/Chat'), 'ChatPage')
-const FlashcardsPage = page(() => import('./pages/app/Flashcards'), 'FlashcardsPage')
-const QuizPage = page(() => import('./pages/app/Quiz'), 'QuizPage')
+const DeskPage = page(() => import('./pages/app/Desk'), 'DeskPage')
+const RoomPage = page(() => import('./pages/app/Room'), 'RoomPage')
+const SetupPage = page(() => import('./pages/app/Setup'), 'SetupPage')
+const SessionPage = page(() => import('./pages/app/Session'), 'SessionPage')
+const JournalPage = page(() => import('./pages/app/Journal'), 'JournalPage')
+const RiskGatePage = page(() => import('./pages/app/RiskGate'), 'RiskGatePage')
+const AskDeskPage = page(() => import('./pages/app/AskDesk'), 'AskDeskPage')
 
 /*
   The route table. `layout` picks the frame: the marketing site (nav and
-  footer), the bare auth screens, or the app shell.
+  footer), the bare auth screens, or the desk shell.
 */
 type Route = { path: string; title: string; layout: 'site' | 'bare' | 'app'; render: () => ReactNode }
 
@@ -35,20 +38,29 @@ const routes: Route[] = [
   { path: '/styleguide', title: 'Style guide', layout: 'site', render: () => <Styleguide /> },
   { path: '/login', title: 'Log in', layout: 'bare', render: () => <Login /> },
   { path: '/signup', title: 'Sign up', layout: 'bare', render: () => <Signup /> },
-  { path: '/app', title: 'Library', layout: 'app', render: () => <LibraryPage /> },
-  { path: '/app/chat', title: 'Ask', layout: 'app', render: () => <ChatPage /> },
-  { path: '/app/flashcards', title: 'Flashcards', layout: 'app', render: () => <FlashcardsPage /> },
-  { path: '/app/quiz', title: 'Quiz', layout: 'app', render: () => <QuizPage /> },
+  { path: '/app', title: "Today's desk", layout: 'app', render: () => <DeskPage /> },
+  { path: '/app/room', title: 'The room', layout: 'app', render: () => <RoomPage /> },
+  { path: '/app/risk', title: 'Risk gate', layout: 'app', render: () => <RiskGatePage /> },
+  { path: '/app/journal', title: 'Journal', layout: 'app', render: () => <JournalPage /> },
+  { path: '/app/chat', title: 'Ask the desk', layout: 'app', render: () => <AskDeskPage /> },
 ]
 
 const Blank = () => <div className="min-h-screen" aria-busy="true" />
 
 export function App() {
   const { path, hash } = useLocation()
-  const hit = routes.find((r) => r.path === path)
+  const setupMatch = match('/app/setup/:symbol', path)
+  const sessionMatch = match('/app/session/:symbol/:date', path)
+  const hit =
+    routes.find((r) => r.path === path) ??
+    (setupMatch
+      ? { path, title: `${setupMatch.symbol.toUpperCase()} setup`, layout: 'app' as const, render: () => <SetupPage /> }
+      : sessionMatch
+        ? { path, title: `${sessionMatch.symbol.toUpperCase()} session`, layout: 'app' as const, render: () => <SessionPage /> }
+        : undefined)
   const main = useRef<HTMLElement>(null)
   const first = useRef(true)
-  const title = hit ? hit.title : 'Page not found'
+  const title = hit ? hit.title : path.startsWith('/app') ? 'Not found' : 'Page not found'
 
   useEffect(() => {
     document.title = title ? `${title} | ${BRAND.name}` : `${BRAND.name}: ${BRAND.tagline}`
@@ -75,11 +87,11 @@ export function App() {
   }, [path, hash])
 
   let body: ReactNode
-  if (hit?.layout === 'app') {
+  if (hit?.layout === 'app' || path.startsWith('/app')) {
     body = (
       <Suspense fallback={<Blank />}>
         <AppShell>
-          <Suspense fallback={<Blank />}>{hit.render()}</Suspense>
+          <Suspense fallback={<Blank />}>{hit ? hit.render() : <NotFound />}</Suspense>
         </AppShell>
       </Suspense>
     )

@@ -22,7 +22,7 @@ export function validateLogin(b: { email?: unknown; password?: unknown }): Error
   return e
 }
 
-export const LEVELS = ['High school', 'University', 'Postgraduate', 'Professional exam'] as const
+export const LEVELS = ['New to trading', '1–2 years', '3–5 years', 'Full-time'] as const
 
 export function validateSignup(b: { name?: unknown; email?: unknown; password?: unknown; level?: unknown; terms?: unknown }): Errors {
   const e: Errors = {}
@@ -34,7 +34,7 @@ export function validateSignup(b: { name?: unknown; email?: unknown; password?: 
   const pw = typeof b.password === 'string' ? b.password : ''
   if (pw.length < 8) e.password = 'Use at least 8 characters.'
   else if (!/[0-9]/.test(pw) || !/[a-zA-Z]/.test(pw)) e.password = 'Mix letters and at least one number.'
-  if (!LEVELS.includes(b.level as (typeof LEVELS)[number])) e.level = 'Choose where you study.'
+  if (!LEVELS.includes(b.level as (typeof LEVELS)[number])) e.level = 'Choose your experience.'
   if (b.terms !== true) e.terms = 'Accept the terms to continue.'
   return e
 }
@@ -51,33 +51,16 @@ export function validateContact(b: { name?: unknown; email?: unknown; message?: 
   return e
 }
 
-export const ACCEPTED = ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'txt', 'md', 'ppt', 'pptx'] as const
-export const MAX_BYTES = 25 * 1024 * 1024
-
-export function fileKind(name: string): 'pdf' | 'doc' | 'png' | 'txt' | 'ppt' {
-  const ext = name.split('.').pop()?.toLowerCase() ?? ''
-  if (ext === 'pdf') return 'pdf'
-  if (ext === 'doc' || ext === 'docx') return 'doc'
-  if (ext === 'png' || ext === 'jpg' || ext === 'jpeg') return 'png'
-  if (ext === 'ppt' || ext === 'pptx') return 'ppt'
-  return 'txt'
-}
-
-export function validateUpload(b: { name?: unknown; size?: unknown }): string | null {
-  const name = typeof b.name === 'string' ? b.name.trim() : ''
-  if (!name) return 'Choose a file to upload.'
-  if (name.length > 180) return 'That file name is too long.'
-  const ext = name.split('.').pop()?.toLowerCase() ?? ''
-  if (!name.includes('.') || !ACCEPTED.includes(ext as (typeof ACCEPTED)[number])) return 'Cramly reads PDF, Word, PowerPoint, images and text files.'
-  const size = typeof b.size === 'number' ? b.size : -1
-  if (!Number.isFinite(size) || size <= 0) return 'That file looks empty.'
-  if (size > MAX_BYTES) return 'Files can be up to 25 MB on the free plan.'
+export function validateSymbol(v: unknown): string | null {
+  const s = typeof v === 'string' ? v.trim().toUpperCase() : ''
+  if (!s) return 'Choose a symbol.'
+  if (!/^[A-Z]{1,5}$/.test(s)) return 'Symbols are one to five letters, like TSLA.'
   return null
 }
 
-export function validateQuestion(v: unknown): string | null {
-  const s = typeof v === 'string' ? v.trim() : ''
-  if (!s) return 'Ask a question first.'
-  if (s.length > 600) return 'Keep questions under 600 characters.'
+/** Prices arrive as dollars in the form and are stored as integer cents. */
+export function validatePrice(v: unknown, label: string): string | null {
+  const n = typeof v === 'number' ? v : Number(v)
+  if (!Number.isFinite(n) || n <= 0) return `${label} must be a price above zero.`
   return null
 }

@@ -1,27 +1,29 @@
-import { useState } from 'react'
-
-import { Button } from '../components/Button'
-import { FileStack } from '../components/FileStack'
+import { ButtonLink } from '../components/Button'
 import { Glyph, GlyphRow } from '../components/Glyphs'
 import { Photo } from '../components/Photo'
-import { UploadDialog } from '../components/UploadDialog'
+import { TradeCard } from '../components/TradeCard'
 import { HERO, IMAGES } from '../content'
 
-/** The reference screen: title, file stack, upload action and the hooded study bot. */
+/** The reference screen: title, the sample trade card and the desk figure. */
 export function Hero() {
-  const [open, setOpen] = useState(false)
   return (
     <section className="relative isolate overflow-hidden" aria-labelledby="hero-title">
       {/* Ambient light: a green bloom between the copy and the figure. */}
       <div aria-hidden className="absolute inset-0 -z-20 bg-[radial-gradient(120%_90%_at_70%_40%,#0d2614_0%,#07120a_45%,var(--color-bg)_80%)]" />
       <div aria-hidden className="absolute left-[44%] top-[34%] -z-10 size-[min(52vw,760px)] -translate-x-1/2 -translate-y-1/2 animate-glow rounded-full bg-[radial-gradient(circle,rgb(47_194_76/0.55)_0%,rgb(47_194_76/0.18)_38%,transparent_68%)] blur-2xl" />
 
-      <div className="pointer-events-none absolute inset-y-0 right-0 -z-10 hidden w-[56%] lg:block">
+      <div className="pointer-events-none absolute inset-0 -z-10 hidden lg:block">
         <Photo
           eager
           src={IMAGES.hero}
-          alt="A hooded study robot with a glowing green eye"
-          className="absolute right-[2%] top-0 h-full w-auto max-w-none object-cover object-top [mask-image:radial-gradient(ellipse_52%_72%_at_50%_42%,#000_62%,transparent_100%)]"
+          alt=""
+          aria-hidden
+          className="absolute right-0 top-0 h-full w-auto max-w-none object-cover object-top [mask-image:radial-gradient(ellipse_60%_78%_at_62%_42%,#000_60%,transparent_100%)]"
+        />
+        {/* Scrim: keeps the copy legible over the charts, clears on the right. */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-[linear-gradient(90deg,var(--color-bg)_0%,rgb(5_9_6/0.95)_30%,rgb(5_9_6/0.6)_52%,rgb(5_9_6/0.2)_72%,rgb(5_9_6/0.45)_100%)]"
         />
       </div>
 
@@ -32,20 +34,30 @@ export function Hero() {
           <span className="block text-fg">{HERO.titleTop}</span>
           <span className="text-gradient-leaf block pb-[0.06em]">{HERO.titleBottom}</span>
         </h1>
-        <p className="mt-6 max-w-[400px] text-[17px] leading-[1.4] tracking-[-0.01em] text-soft">{HERO.lede}</p>
+        <p className="mt-6 max-w-[430px] text-[17px] leading-[1.4] tracking-[-0.01em] text-soft">{HERO.lede}</p>
 
         <div className="relative mt-12 w-[300px] max-w-full">
-          <FileStack />
-          <Button variant="paper" size="xl" className="relative z-40 -mt-[30px] h-[74px] w-full max-w-[330px] rounded-[38px] lg:-ml-[22px] lg:w-[330px] text-[17.5px] font-semibold" onClick={() => setOpen(true)}>
+          <TradeCard className="pb-12" />
+          <ButtonLink
+            href="/app"
+            variant="paper"
+            size="xl"
+            className="relative z-40 -mt-[30px] h-[74px] w-full max-w-[330px] rounded-[38px] text-[17.5px] font-semibold lg:-ml-[22px] lg:w-[330px]"
+          >
             {HERO.cta}
-          </Button>
+          </ButtonLink>
         </div>
 
         <GlyphRow className="mt-14 hidden lg:flex" />
 
         {/* Small-screen figure, below the copy. */}
         <div className="relative mt-12 lg:hidden">
-          <Photo src={IMAGES.hero} alt="" aria-hidden className="mx-auto h-[460px] w-auto [mask-image:radial-gradient(ellipse_50%_52%_at_50%_45%,#000_55%,transparent_100%)]" />
+          <Photo
+            src={IMAGES.hero}
+            alt=""
+            aria-hidden
+            className="mx-auto h-[460px] w-auto [mask-image:radial-gradient(ellipse_50%_52%_at_50%_45%,#000_55%,transparent_100%)]"
+          />
         </div>
 
         <p className="mt-6 flex max-w-[330px] items-start gap-3 text-[15.5px] leading-[1.35] text-soft lg:absolute lg:bottom-[56px] lg:right-[clamp(24px,6vw,96px)] lg:mt-0">
@@ -53,8 +65,6 @@ export function Hero() {
           {HERO.caption}
         </p>
       </div>
-
-      <UploadDialog open={open} onClose={() => setOpen(false)} />
     </section>
   )
 }
