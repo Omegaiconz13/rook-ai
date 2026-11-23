@@ -8,3 +8,4 @@ __pycache__
 !.dev.vars.example
 .DS_Store
 *.log
+/freebuff-sites-build/
