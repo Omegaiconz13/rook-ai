@@ -1,5 +1,7 @@
 import { Hono } from 'hono'
 
+import { STATUS, fail } from '../shared/contracts'
+
 import { barsFor, SESSION_DATE } from '../shared/fixtures'
 import { DATA, INSTRUMENTS } from '../shared/market'
 import { headlinesFor } from '../shared/news'
@@ -50,8 +52,8 @@ async function body<T>(c: { req: { json: <J>() => Promise<J> } }): Promise<Parti
 /** Where the bars came from. `provenance: 'seed'` means bundled, not a live feed. */
 const SOURCE = DATA.real ? 'yfinance' : 'fixture'
 
-const invalidJson = { ok: false, error: 'Send a JSON object.' }
-const fields = { ok: false, error: 'Check the highlighted fields.' }
+const invalidJson = fail('Send a JSON object.')
+const fields = fail('Check the highlighted fields.')
 
 /**
  * A model call costs money, so the route refuses another site's page. Requests
@@ -79,9 +81,9 @@ app.get('/api/market/universe', (c) =>
 
 app.get('/api/market/bars', (c) => {
   const symbol = (c.req.query('symbol') ?? '').toUpperCase()
-  if (!/^[A-Z]{1,5}$/.test(symbol)) return c.json({ ok: false, error: 'Send a symbol like TSLA.' }, 422)
+  if (!/^[A-Z]{1,5}$/.test(symbol)) return c.json(fail('Send a symbol like TSLA.'), STATUS.UNPROCESSABLE)
   const bars = barsFor(symbol)
-  if (bars.length === 0) return c.json({ ok: false, error: `No bars for ${symbol}.` }, 404)
+  if (bars.length === 0) return c.json(fail(`No bars for ${symbol}.`), STATUS.NOT_FOUND)
   return c.json({
     ok: true,
     data: { symbol, interval: '5m', sessionDate: SESSION_DATE, bars },
@@ -97,15 +99,15 @@ app.get('/api/desk/scan', (c) =>
 
 app.post('/api/risk/check', async (c) => {
   const b = await body<{ plan: TradePlan; limits: RiskLimits; account: Account; session: SessionInfo; history: { symbol: string; sessionDate: string }[] }>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   const { plan, limits, account, session } = b
-  if (!plan || !limits || !account || !session) return c.json(fields, 422)
+  if (!plan || !limits || !account || !session) return c.json(fields, STATUS.UNPROCESSABLE)
   const numbers = [plan.entryCents, plan.stopCents, plan.targetCents, limits.equityCents, limits.riskPerTradePct]
   if (numbers.some((n) => typeof n !== 'number' || !Number.isFinite(n))) {
-    return c.json({ ok: false, error: 'Plan and limits need numeric prices.', errors: { plan: 'Prices must be numbers in cents.' } }, 422)
+    return c.json(fail('Plan and limits need numeric prices.', { errors: { plan: 'Prices must be numbers in cents.' } }), STATUS.UNPROCESSABLE)
   }
   if (!['pre', 'open', 'close', 'closed'].includes(session.state)) {
-    return c.json({ ok: false, error: 'Unknown session state.', errors: { session: 'Use pre, open, close or closed.' } }, 422)
+    return c.json(fail('Unknown session state.', { errors: { session: 'Use pre, open, close or closed.' } }), STATUS.UNPROCESSABLE)
   }
   const verdict = checkPlan({
     plan,
@@ -119,12 +121,12 @@ app.post('/api/risk/check', async (c) => {
 
 app.post('/api/simulate', async (c) => {
   const b = await body<{ plan: TradePlan; seed?: number; runs?: number }>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   if (!b.plan || typeof b.plan.entryCents !== 'number' || typeof b.plan.stopCents !== 'number') {
-    return c.json({ ok: false, error: 'Send a plan with numeric entry and stop.', errors: { plan: 'Prices must be numbers in cents.' } }, 422)
+    return c.json(fail('Send a plan with numeric entry and stop.', { errors: { plan: 'Prices must be numbers in cents.' } }), STATUS.UNPROCESSABLE)
   }
   if (b.plan.entryCents <= b.plan.stopCents) {
-    return c.json({ ok: false, error: 'Stop must sit below the entry for a long.', errors: { plan: 'Check the stop.' } }, 422)
+    return c.json(fail('Stop must sit below the entry for a long.', { errors: { plan: 'Check the stop.' } }), STATUS.UNPROCESSABLE)
   }
   return c.json({ ok: true, data: simulate({ plan: b.plan, seed: b.seed, runs: b.runs }) })
 })
@@ -142,18 +144,18 @@ app.get('/api/news', (c) => {
 
 app.post('/api/signup', async (c) => {
   const b = await body<Record<string, unknown>>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   const errors = validateSignup(b)
-  if (Object.keys(errors).length) return c.json({ ...fields, errors }, 422)
+  if (Object.keys(errors).length) return c.json({ ...fields, errors }, STATUS.UNPROCESSABLE)
   return c.json({ ok: true, user: { name: String(b.name).trim(), email: String(b.email).trim().toLowerCase(), level: b.level } })
 })
 
 // Demo sign-in: validates the shape only. Replace with your auth provider.
 app.post('/api/login', async (c) => {
   const b = await body<Record<string, unknown>>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   const errors = validateLogin(b)
-  if (Object.keys(errors).length) return c.json({ ...fields, errors }, 422)
+  if (Object.keys(errors).length) return c.json({ ...fields, errors }, STATUS.UNPROCESSABLE)
   const email = String(b.email).trim().toLowerCase()
   const name = email.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (m) => m.toUpperCase())
   return c.json({ ok: true, user: { name, email, level: '1–2 years' } })
@@ -161,17 +163,17 @@ app.post('/api/login', async (c) => {
 
 app.post('/api/subscribe', async (c) => {
   const b = await body<{ email: string }>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   const error = validateEmail(b.email)
-  if (error) return c.json({ ok: false, error, errors: { email: error } }, 422)
+  if (error) return c.json(fail(error, { errors: { email: error } }), STATUS.UNPROCESSABLE)
   return c.json({ ok: true })
 })
 
 app.post('/api/contact', async (c) => {
   const b = await body<Record<string, unknown>>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   const errors = validateContact(b)
-  if (Object.keys(errors).length) return c.json({ ...fields, errors }, 422)
+  if (Object.keys(errors).length) return c.json({ ...fields, errors }, STATUS.UNPROCESSABLE)
   return c.json({ ok: true })
 })
 
@@ -190,20 +192,20 @@ app.get('/api/ninth/model', (c) =>
 )
 
 app.post('/api/ninth/turn', async (c) => {
-  if (!fromSameOrigin(c.req.raw)) return c.json({ ok: false, error: 'Cross-origin model calls are refused.' }, 403)
+  if (!fromSameOrigin(c.req.raw)) return c.json(fail('Cross-origin model calls are refused.'), STATUS.FORBIDDEN)
 
   const key = c.env.MODEL_API_KEY
   if (!key) {
-    return c.json({ ok: false, error: 'No model is configured on this deployment, so Ninth answers from the desk.' }, 503)
+    return c.json(fail('No model is configured on this deployment, so Ninth answers from the desk.'), STATUS.UNAVAILABLE)
   }
 
   const b = await body<{ system: string; messages: ModelCallInput['messages']; tools: string[] }>(c)
-  if (!b) return c.json(invalidJson, 400)
+  if (!b) return c.json(invalidJson, STATUS.BAD_REQUEST)
   if (typeof b.system !== 'string' || !Array.isArray(b.messages) || !Array.isArray(b.tools)) {
-    return c.json({ ok: false, error: 'A turn needs a system prompt, messages and tools.' }, 422)
+    return c.json(fail('A turn needs a system prompt, messages and tools.'), STATUS.UNPROCESSABLE)
   }
   if (b.system.length > MAX_SYSTEM_CHARS || b.messages.length > MAX_MESSAGES || b.tools.length > MAX_TOOLS) {
-    return c.json({ ok: false, error: 'That turn is larger than this route accepts.' }, 413)
+    return c.json(fail('That turn is larger than this route accepts.'), STATUS.PAYLOAD_TOO_LARGE)
   }
 
   const base = (c.env.MODEL_BASE_URL ?? MODEL_DEFAULT_BASE).replace(/\/+$/, '')
@@ -220,12 +222,12 @@ app.post('/api/ninth/turn', async (c) => {
       ),
     })
   } catch {
-    return c.json({ ok: false, error: 'The model provider could not be reached.' }, 502)
+    return c.json(fail('The model provider could not be reached.'), STATUS.BAD_GATEWAY)
   }
 
   if (!upstream.ok || !upstream.body) {
     const detail = await upstream.text().catch(() => '')
-    return c.json({ ok: false, error: `The provider answered ${upstream.status}.`, detail: detail.slice(0, 300) }, 502)
+    return c.json(fail(`The provider answered ${upstream.status}.`, { detail: detail.slice(0, 300) }), STATUS.BAD_GATEWAY)
   }
 
   return new Response(upstream.body, {
@@ -233,7 +235,7 @@ app.post('/api/ninth/turn', async (c) => {
   })
 })
 
-app.all('/api/*', (c) => c.json({ ok: false, error: 'Not found' }, 404))
+app.all('/api/*', (c) => c.json(fail('Not found'), STATUS.NOT_FOUND))
 
 /*
   The docs are for agents first. They are plain markdown in `public/`, served with
@@ -247,7 +249,7 @@ async function serveMarkdown(c: { req: { url: string }; env: Env }, path: string
   const asset = await c.env.ASSETS.fetch(new Request(new URL(path, c.req.url).toString()))
   const type = asset.headers.get('content-type') ?? ''
   if (!asset.ok || type.includes('text/html')) {
-    return Response.json({ ok: false, error: `No document at ${path}.` }, { status: 404 })
+    return Response.json(fail(`No document at ${path}.`), { status: STATUS.NOT_FOUND })
   }
   return new Response(asset.body, {
     headers: {
@@ -264,7 +266,7 @@ app.get('/docs/:file', (c) => {
   const file = c.req.param('file')
   const match = /^([a-z]+)\.md$/.exec(file)
   if (!match || !(DOCS as readonly string[]).includes(match[1])) {
-    return c.json({ ok: false, error: `Docs: ${DOCS.map((d) => `/docs/${d}.md`).join(', ')}` }, 404)
+    return c.json(fail(`Docs: ${DOCS.map((d) => `/docs/${d}.md`).join(', ')}`), STATUS.NOT_FOUND)
   }
   return serveMarkdown(c, `/docs/${file}`)
 })
