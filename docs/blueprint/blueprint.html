@@ -1,0 +1,792 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Rook — Blueprint</title>
+<style>
+  :root {
+    --bg: #050906;
+    --panel: #0c150f;
+    --raised: #101c13;
+    --line: rgba(190, 255, 200, 0.14);
+    --line-strong: rgba(190, 255, 200, 0.26);
+    --fg: #eef4ee;
+    --soft: #cfdbd1;
+    --muted: #9fb0a3;
+    --faint: #7f9184;
+    --leaf: #7ee068;
+    --leaf-deep: #1f5a2a;
+    --leaf-soft: rgba(126, 224, 104, 0.12);
+    --amber: #f0b775;
+    --rose: #e2695e;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+    --sans: 'Albert Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1100px 600px at 15% -10%, rgba(47, 194, 76, 0.09), transparent 60%),
+      var(--bg);
+    color: var(--soft);
+    font: 400 15px/1.65 var(--sans);
+    padding: 0 0 120px;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+  header.top { padding: 72px 0 40px; border-bottom: 1px solid var(--line); }
+  .kicker {
+    font: 500 11px/1 var(--mono);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--leaf);
+  }
+  h1 { font: 600 44px/1.1 var(--sans); letter-spacing: -0.02em; color: var(--fg); margin: 18px 0 14px; }
+  h1 em { font-style: normal; color: var(--leaf); }
+  .lede { max-width: 62ch; color: var(--muted); font-size: 16px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 26px; font: 400 12px/1.4 var(--mono); color: var(--faint); }
+  .facts b { color: var(--fg); font-weight: 500; }
+  nav.toc { margin-top: 32px; display: flex; flex-wrap: wrap; gap: 8px; }
+  nav.toc a {
+    font: 500 12px/1 var(--mono);
+    color: var(--soft);
+    text-decoration: none;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: rgba(12, 21, 15, 0.7);
+  }
+  nav.toc a:hover { border-color: var(--leaf); color: var(--leaf); }
+  section { padding: 64px 0 8px; border-bottom: 1px solid var(--line); }
+  section:last-of-type { border-bottom: 0; }
+  h2 { font: 600 26px/1.2 var(--sans); color: var(--fg); margin: 0 0 6px; letter-spacing: -0.01em; }
+  h2 span { font: 500 12px/1 var(--mono); color: var(--leaf); letter-spacing: 0.14em; margin-right: 12px; text-transform: uppercase; }
+  .sub { color: var(--muted); margin: 0 0 26px; max-width: 74ch; }
+  figure { margin: 0 0 10px; }
+  .canvas {
+    background: linear-gradient(180deg, rgba(12, 21, 15, 0.92), rgba(7, 16, 10, 0.92));
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 10px 6px;
+    overflow: hidden;
+  }
+  svg { display: block; width: 100%; height: auto; }
+  figcaption { font: 400 12px/1.6 var(--mono); color: var(--faint); padding: 12px 4px 0; }
+  figcaption b { color: var(--soft); font-weight: 500; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0 24px; font-size: 13.5px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font: 500 11px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); }
+  td code, p code, li code { font: 400 12.5px/1.5 var(--mono); color: var(--leaf); background: var(--leaf-soft); padding: 1px 5px; border-radius: 4px; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 18px; }
+  .card { border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; background: rgba(12, 21, 15, 0.6); }
+  .card h3 { font: 500 13px/1.3 var(--mono); color: var(--fg); margin: 0 0 8px; letter-spacing: 0.02em; }
+  .card p { margin: 0; color: var(--muted); font-size: 13.5px; }
+  .bad { color: var(--rose); }
+  .ok { color: var(--leaf); }
+  .warn { color: var(--amber); }
+  footer.foot { padding-top: 40px; color: var(--faint); font: 400 12px/1.7 var(--mono); }
+  /* SVG text helpers */
+  .lbl { font: 500 12px var(--mono); fill: var(--soft); }
+  .lbl-s { font: 400 10.5px var(--mono); fill: var(--faint); }
+  .lbl-b { font: 600 12.5px var(--mono); fill: var(--fg); }
+  .lbl-leaf { font: 600 12px var(--mono); fill: var(--leaf); }
+  .lbl-rose { font: 600 11px var(--mono); fill: var(--rose); }
+  .lbl-amber { font: 500 11px var(--mono); fill: var(--amber); }
+  .box { fill: rgba(12, 21, 15, 0.96); stroke: var(--line-strong); stroke-width: 1; }
+  .box-leaf { fill: rgba(31, 90, 42, 0.22); stroke: rgba(126, 224, 104, 0.55); }
+  .box-warn { fill: rgba(240, 183, 117, 0.10); stroke: rgba(240, 183, 117, 0.5); }
+  .box-rose { fill: rgba(226, 105, 94, 0.10); stroke: rgba(226, 105, 94, 0.5); }
+  .box-plain { fill: rgba(16, 28, 19, 0.9); stroke: var(--line); }
+  .edge { stroke: rgba(190, 255, 200, 0.4); stroke-width: 1.4; fill: none; marker-end: url(#arw); }
+  .edge-leaf { stroke: rgba(126, 224, 104, 0.75); stroke-width: 1.6; fill: none; marker-end: url(#arw-leaf); }
+  .edge-rose { stroke: rgba(226, 105, 94, 0.7); stroke-width: 1.6; fill: none; stroke-dasharray: 5 4; marker-end: url(#arw-rose); }
+  .edge-faint { stroke: rgba(127, 145, 132, 0.4); stroke-width: 1.2; fill: none; stroke-dasharray: 4 4; marker-end: url(#arw-faint); }
+  .tick { fill: rgba(126, 224, 104, 0.18); stroke: rgba(126, 224, 104, 0.35); }
+  .cross { fill: rgba(226, 105, 94, 0.12); stroke: rgba(226, 105, 94, 0.28); }
+  .grid-line { stroke: rgba(190, 255, 200, 0.07); stroke-width: 1; }
+  @media (max-width: 640px) {
+    h1 { font-size: 30px; }
+    .wrap { padding: 0 16px; }
+    body { font-size: 14px; }
+  }
+  @media print {
+    body { background: #fff; color: #111; }
+    .canvas { background: #fff; border-color: #ccc; }
+    section { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="kicker">Architecture blueprint · 2026-11-24</div>
+  <h1>Rook, <em>drawn</em></h1>
+  <p class="lede">
+    A paper trading desk for one trade at a time. The chart, the written rules and the journal are read
+    by Ninth; plain TypeScript decides whether a trade is allowed; every decision, including every
+    refusal, is journaled. Six diagrams of the same system at six different scales.
+  </p>
+  <div class="facts">
+    <span><b>445</b> tests passing</span>
+    <span><b>tsc</b> clean</span>
+    <span><b>14,842</b> lines src</span>
+    <span><b>4,291</b> lines tests</span>
+    <span><b>7.7 s</b> build</span>
+    <span><b>0</b> orders placed</span>
+  </div>
+  <nav class="toc">
+    <a href="#d1">d1 · layers</a>
+    <a href="#d2">d2 · topology</a>
+    <a href="#d3">d3 · desk loop</a>
+    <a href="#d4">d4 · turn pipeline</a>
+    <a href="#d5">d5 · routing</a>
+    <a href="#d6">d6 · plan &amp; ticket</a>
+  </nav>
+</header>
+
+<!-- ============================================================ D1 -->
+<section id="d1">
+  <h2><span>d1</span>The layer rule, as a matrix</h2>
+  <p class="sub">
+    Rows are the importing layer, columns the imported one. Everything below the diagonal is legal and is
+    what the code already does; everything above it is a bug waiting for a build failure. One specific
+    cell above the diagonal matters most: <b class="bad">agent → adapters</b>, which would make the
+    harness own a transport.
+  </p>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1150 470" role="img" aria-label="Dependency matrix between six layers. Imports below the diagonal are allowed, above are forbidden.">
+        <defs>
+          <marker id="arw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(190,255,200,0.55)"/>
+          </marker>
+        </defs>
+
+        <!-- column headers -->
+        <text class="lbl-s" x="268" y="42">imported →</text>
+        <text class="lbl-s" x="196" y="72" transform="rotate(-90 196 72)">importing ↓</text>
+
+        <!-- layer labels -->
+        <g>
+          <rect class="box-leaf" x="252" y="86" width="134" height="46" rx="8"/>
+          <text class="lbl-b" x="262" y="105">L0</text><text class="lbl-s" x="262" y="121">domain</text>
+          <rect class="box-leaf" x="386" y="86" width="134" height="46" rx="8"/>
+          <text class="lbl-b" x="396" y="105">L1</text><text class="lbl-s" x="396" y="121">engine</text>
+          <rect class="box-leaf" x="520" y="86" width="134" height="46" rx="8"/>
+          <text class="lbl-b" x="530" y="105">L2</text><text class="lbl-s" x="530" y="121">agent</text>
+          <rect class="box" x="654" y="86" width="134" height="46" rx="8"/>
+          <text class="lbl-b" x="664" y="105">L3</text><text class="lbl-s" x="664" y="121">adapters</text>
+          <rect class="box" x="788" y="86" width="134" height="46" rx="8"/>
+          <text class="lbl-b" x="798" y="105">L4</text><text class="lbl-s" x="798" y="121">edge</text>
+          <rect class="box" x="922" y="86" width="134" height="46" rx="8"/>
+          <text class="lbl-b" x="932" y="105">L5</text><text class="lbl-s" x="932" y="121">view</text>
+        </g>
+
+        <!-- matrix 6x6, cell 134x46 starting y=150, x=252 -->
+        <g>
+          <!-- row L0: none -->
+          <g>
+            <rect class="grid-line" x="252" y="148" width="804" height="46" fill="none"/>
+            <text class="lbl" x="240" y="177" text-anchor="end">L0 domain</text>
+          </g>
+          <!-- row L1: L0 ok -->
+          <g>
+            <rect class="grid-line" x="252" y="196" width="804" height="46" fill="none"/>
+            <text class="lbl" x="240" y="225" text-anchor="end">L1 engine</text>
+            <rect class="tick" x="254" y="198" width="130" height="42" rx="6"/><text class="lbl-leaf" x="310" y="224">ok</text>
+          </g>
+          <!-- row L2: L0 L1 ok -->
+          <g>
+            <rect class="grid-line" x="252" y="244" width="804" height="46" fill="none"/>
+            <text class="lbl" x="240" y="273" text-anchor="end">L2 agent</text>
+            <rect class="tick" x="254" y="246" width="130" height="42" rx="6"/><text class="lbl-leaf" x="310" y="272">ok</text>
+            <rect class="tick" x="388" y="246" width="130" height="42" rx="6"/><text class="lbl-leaf" x="444" y="272">ok</text>
+            <rect class="cross" x="656" y="246" width="130" height="42" rx="6"/>
+            <text class="lbl-rose" x="700" y="272">never</text>
+          </g>
+          <!-- row L3: L0 L1 L2 ok -->
+          <g>
+            <rect class="grid-line" x="252" y="292" width="804" height="46" fill="none"/>
+            <text class="lbl" x="240" y="321" text-anchor="end">L3 adapters</text>
+            <rect class="tick" x="254" y="294" width="130" height="42" rx="6"/><text class="lbl-leaf" x="310" y="320">ok</text>
+            <rect class="tick" x="388" y="294" width="130" height="42" rx="6"/><text class="lbl-leaf" x="444" y="320">ok</text>
+            <rect class="tick" x="522" y="294" width="130" height="42" rx="6"/><text class="lbl-leaf" x="578" y="320">ok</text>
+          </g>
+          <!-- row L4: L0 L1 L2 ok, not L3 -->
+          <g>
+            <rect class="grid-line" x="252" y="340" width="804" height="46" fill="none"/>
+            <text class="lbl" x="240" y="369" text-anchor="end">L4 edge</text>
+            <rect class="tick" x="254" y="342" width="130" height="42" rx="6"/><text class="lbl-leaf" x="310" y="368">ok</text>
+            <rect class="tick" x="388" y="342" width="130" height="42" rx="6"/><text class="lbl-leaf" x="444" y="368">ok</text>
+            <rect class="tick" x="522" y="342" width="130" height="42" rx="6"/><text class="lbl-leaf" x="578" y="368">ok</text>
+            <rect class="cross" x="656" y="342" width="130" height="42" rx="6"/>
+            <text class="lbl-rose" x="704" y="368">never</text>
+          </g>
+          <!-- row L5: all ok -->
+          <g>
+            <rect class="grid-line" x="252" y="388" width="804" height="46" fill="none"/>
+            <text class="lbl" x="240" y="417" text-anchor="end">L5 view</text>
+            <rect class="tick" x="254" y="390" width="130" height="42" rx="6"/><text class="lbl-leaf" x="310" y="416">ok</text>
+            <rect class="tick" x="388" y="390" width="130" height="42" rx="6"/><text class="lbl-leaf" x="444" y="416">ok</text>
+            <rect class="tick" x="522" y="390" width="130" height="42" rx="6"/><text class="lbl-leaf" x="578" y="416">ok</text>
+            <rect class="tick" x="656" y="390" width="130" height="42" rx="6"/><text class="lbl-leaf" x="712" y="416">ok</text>
+            <rect class="tick" x="790" y="390" width="130" height="42" rx="6"/><text class="lbl-leaf" x="846" y="416">ok</text>
+          </g>
+        </g>
+
+        <!-- note -->
+        <rect class="box-warn" x="252" y="438" width="700" height="24" rx="6" opacity="0.9"/>
+        <text class="lbl-amber" x="264" y="454">one rule: inward only. the cell that matters is L2 → L3 — the harness owns no transport.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>Read it as:</b> a green cell is an import that already happens and must keep working; a red cell is
+      a build failure the moment it appears — the outward half of the same matrix.
+      <code>scripts/check-layers.mjs</code> (phase 1.6) enforces them with a source scan — no AST, no dependency.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ D2 -->
+<section id="d2">
+  <h2><span>d2</span>Topology: what runs where, and what remembers</h2>
+  <p class="sub">
+    Three tiers. The browser owns state and decisions; the edge owns the key and the wire; the model is
+    optional at every layer. There is no database, and that is a design position, not an omission.
+  </p>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1150 620" role="img" aria-label="Deployment topology: browser, Cloudflare edge, optional model provider, with localStorage as the only persistence.">
+        <defs>
+          <marker id="arw-leaf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(126,224,104,0.85)"/>
+          </marker>
+          <marker id="arw-faint" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(127,145,132,0.6)"/>
+          </marker>
+          <marker id="arw-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(240,183,117,0.85)"/>
+          </marker>
+          <marker id="arw-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(226,105,94,0.9)"/>
+          </marker>
+        </defs>
+        <rect class="box-leaf" x="40" y="70" width="360" height="440" rx="14"/>
+        <text class="lbl-leaf" x="60" y="96">BROWSER · the desk</text>
+        <text class="lbl-s" x="60" y="114">React 19 · Vite · Tailwind tokens</text>
+
+        <rect class="box-plain" x="60" y="130" width="320" height="86" rx="8"/>
+        <text class="lbl" x="76" y="152">L5 views</text>
+        <text class="lbl-s" x="76" y="171">Desk · Charts · Gate · Journal · Ninth</text>
+        <text class="lbl-s" x="76" y="189">13 routes from one table</text>
+        <text class="lbl-s" x="76" y="207">+ marketing / /pricing / /about</text>
+
+        <rect class="box-leaf" x="60" y="228" width="320" height="120" rx="8"/>
+        <text class="lbl-leaf" x="76" y="250">L1–L2 pure TypeScript</text>
+        <text class="lbl-s" x="76" y="269">risk.checkPlan → GateVerdict (15 rules)</text>
+        <text class="lbl-s" x="76" y="287">sizing · simulate · setups · ticket</text>
+        <text class="lbl-s" x="76" y="305">ninth: router · gate · loop · memory</text>
+        <text class="lbl-s" x="76" y="323">12 skills · 17 tools · 4 tiers</text>
+        <text class="lbl-s" x="76" y="341" fill="#7ee068">no DOM · no fetch · 445 tests</text>
+
+        <rect class="box-plain" x="60" y="360" width="320" height="130" rx="8"/>
+        <text class="lbl" x="76" y="382">localStorage · rook:v1:*</text>
+        <text class="lbl-s" x="76" y="401">limits · account · user · seed</text>
+        <text class="lbl-s" x="76" y="419">journal (schema 2, ≤2000 rows)</text>
+        <text class="lbl-s" x="76" y="437">ninth: memory · audit · watches</text>
+        <text class="lbl-s" x="76" y="455">learnings (Wilson-gated)</text>
+        <text class="lbl-s" x="76" y="477" fill="#f0b775">the only persistence that exists</text>
+
+        <!-- edge -->
+        <rect class="box" x="450" y="70" width="330" height="440" rx="14"/>
+        <text class="lbl-b" x="470" y="96">CLOUDFLARE EDGE · Worker</text>
+        <text class="lbl-s" x="470" y="114">Hono · run_worker_first · SPA assets</text>
+
+        <rect class="box-plain" x="470" y="130" width="290" height="150" rx="8"/>
+        <text class="lbl" x="486" y="152">/api/* · 13 routes</text>
+        <text class="lbl-s" x="486" y="172">health · market · desk/scan</text>
+        <text class="lbl-s" x="486" y="190">risk/check  ← pure, same fn</text>
+        <text class="lbl-s" x="486" y="208">simulate · news</text>
+        <text class="lbl-s" x="486" y="226">signup · login · subscribe · contact</text>
+        <text class="lbl-s" x="486" y="244">ninth/model · ninth/turn (SSE)</text>
+        <text class="lbl-s" x="486" y="266" fill="#f0b775">no database · no session</text>
+
+        <rect class="box-warn" x="470" y="294" width="290" height="86" rx="8"/>
+        <text class="lbl-amber" x="486" y="316">Worker secret</text>
+        <text class="lbl-s" x="486" y="335">MODEL_API_KEY (never in the browser)</text>
+        <text class="lbl-s" x="486" y="353">MODEL_BASE_URL · MODEL_NAME</text>
+        <text class="lbl-s" x="486" y="371">same-origin check · size caps</text>
+
+        <rect class="box-plain" x="470" y="396" width="290" height="94" rx="8"/>
+        <text class="lbl" x="486" y="418">static assets binding</text>
+        <text class="lbl-s" x="486" y="437">dist/client · SPA fallback</text>
+        <text class="lbl-s" x="486" y="455">deploy.json + wrangler.jsonc</text>
+        <text class="lbl-s" x="486" y="473" fill="#e2695e">must agree, or publish fails</text>
+
+        <!-- provider -->
+        <rect class="box" x="830" y="150" width="280" height="200" rx="14"/>
+        <text class="lbl-b" x="850" y="176">MODEL PROVIDER · optional</text>
+        <text class="lbl-s" x="850" y="196">any OpenAI-compatible /chat/completions</text>
+        <text class="lbl-s" x="850" y="214">OpenAI · OSS host · local Ollama</text>
+
+        <rect class="box-plain" x="850" y="232" width="240" height="46" rx="8"/>
+        <text class="lbl-s" x="866" y="252">offline demo: no key → 503,</text>
+        <text class="lbl-s" x="866" y="268">Ninth answers from the desk</text>
+
+        <rect class="box-rose" x="850" y="292" width="240" height="42" rx="8"/>
+        <text class="lbl-rose" x="866" y="318">never decides a verdict</text>
+
+        <!-- arrows -->
+        <line class="edge-leaf" x1="400" y1="196" x2="448" y2="196"/>
+        <text class="lbl-s" x="404" y="188" fill="#7ee068">fetch</text>
+        <line class="edge" x1="448" y1="232" x2="400" y2="232"/>
+        <text class="lbl-s" x="444" y="248" text-anchor="end">ApiResult</text>
+
+        <line class="edge-rose" x1="782" y1="220" x2="824" y2="220"/>
+        <text class="lbl-amber" x="790" y="210">SSE</text>
+
+        <!-- memory strip -->
+        <rect class="box-plain" x="40" y="536" width="1070" height="60" rx="12"/>
+        <text class="lbl" x="60" y="560">PERSISTS IN</text>
+        <text class="lbl-s" x="60" y="580">browser localStorage only — no cookies, no session, no rows on a server. A second browser is a second desk, by design.</text>
+        <text class="lbl-s" x="830" y="560">moves money</text>
+        <text class="lbl-rose" x="830" y="580">nothing · paper only</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>Trust boundary:</b> the model key lives at the edge; the gate lives in the browser; the verdict
+      function is the same code in both places. Nothing is stored server-side, so there is nothing to
+      breach but the key.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ D3 -->
+<section id="d3">
+  <h2><span>d3</span>The desk loop, with the branch that defines the product</h2>
+  <p class="sub">
+    Nine steps, one decision, and a refusal path that is as designed as the success path. The gate reads a
+    plan and returns a verdict; it cannot see the chat, the chart or the user's mood.
+  </p>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1150 560" role="img" aria-label="Desk workflow: scan, setup, plan, size, gate, then either refused and journaled or approved, ticketed, journaled and reviewed.">
+        <defs>
+          <marker id="m1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(190,255,200,0.6)"/>
+          </marker>
+          <marker id="m-leaf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(126,224,104,0.85)"/>
+          </marker>
+          <marker id="m-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(226,105,94,0.85)"/>
+          </marker>
+        </defs>
+
+        <!-- lane labels -->
+        <text class="lbl-s" x="40" y="60">HAPPY PATH</text>
+        <text class="lbl-s" x="40" y="300">REFUSAL PATH</text>
+        <line class="grid-line" x1="40" y1="76" x2="1110" y2="76"/>
+        <line class="grid-line" x1="40" y1="286" x2="1110" y2="286"/>
+
+        <!-- step 1-4 -->
+        <g>
+          <rect class="box-plain" x="40" y="100" width="150" height="66" rx="10"/>
+          <text class="lbl-b" x="56" y="124">1 · Scan</text>
+          <text class="lbl-s" x="56" y="142">4 setup families</text>
+          <text class="lbl-s" x="56" y="158">deskSetups()</text>
+
+          <rect class="box-plain" x="214" y="100" width="150" height="66" rx="10"/>
+          <text class="lbl-b" x="230" y="124">2 · Setup</text>
+          <text class="lbl-s" x="230" y="142">ORB · flag · FVG</text>
+          <text class="lbl-s" x="230" y="158">reclaim</text>
+
+          <rect class="box-plain" x="388" y="100" width="150" height="66" rx="10"/>
+          <text class="lbl-b" x="404" y="124">3 · Plan</text>
+          <text class="lbl-s" x="404" y="142">entry · stop · target</text>
+          <text class="lbl-s" x="404" y="158">status: draft</text>
+
+          <rect class="box-plain" x="562" y="100" width="150" height="66" rx="10"/>
+          <text class="lbl-b" x="578" y="124">4 · Size</text>
+          <text class="lbl-s" x="578" y="142">3 limits compete</text>
+          <text class="lbl-s" x="578" y="158">risk · cap · cash</text>
+        </g>
+        <line class="edge" x1="190" y1="133" x2="212" y2="133" marker-end="url(#m1)"/>
+        <line class="edge" x1="364" y1="133" x2="386" y2="133" marker-end="url(#m1)"/>
+        <line class="edge" x1="538" y1="133" x2="560" y2="133" marker-end="url(#m1)"/>
+
+        <!-- gate -->
+        <polygon class="box-leaf" points="840,88 940,133 840,178 740,133"/>
+        <text class="lbl-b" x="800" y="130">6 · GATE</text>
+        <text class="lbl-s" x="788" y="148">checkPlan()</text>
+        <line class="edge" x1="712" y1="133" x2="738" y2="133" marker-end="url(#m1)"/>
+        <text class="lbl-s" x="900" y="242">pure · 15 rules · no model</text>
+
+        <!-- approved path -->
+        <line class="edge-leaf" x1="940" y1="133" x2="1000" y2="133" marker-end="url(#m-leaf)"/>
+        <text class="lbl-leaf" x="946" y="122">pass</text>
+
+        <rect class="box-leaf" x="1002" y="100" width="108" height="66" rx="10"/>
+        <text class="lbl-b" x="1014" y="124">7 · Ticket</text>
+        <text class="lbl-s" x="1014" y="142">proposed →</text>
+        <text class="lbl-s" x="1014" y="158">confirmed</text>
+
+        <!-- approved continues on second row of happy lane -->
+        <path class="edge-leaf" d="M1056,166 L1056,214 L200,214" marker-end="url(#m-leaf)" fill="none"/>
+        <text class="lbl-s" x="430" y="232" fill="#7ee068">human confirms in the UI — the model cannot spend this token</text>
+
+        <rect class="box-plain" x="40" y="182" width="160" height="66" rx="10"/>
+        <text class="lbl-b" x="56" y="206">8 · Journal</text>
+        <text class="lbl-s" x="56" y="224">APPROVED row</text>
+        <text class="lbl-s" x="56" y="240">plan · size · max loss</text>
+
+        <rect class="box-plain" x="228" y="182" width="150" height="66" rx="10"/>
+        <text class="lbl-b" x="244" y="206">9 · Review</text>
+        <text class="lbl-s" x="244" y="224">R realised</text>
+        <text class="lbl-s" x="244" y="240">rule adherence</text>
+
+        <line class="edge-leaf" x1="200" y1="215" x2="226" y2="215" marker-end="url(#m-leaf)"/>
+
+        <!-- refusal -->
+        <path class="edge-rose" d="M840,178 L840,330 L1040,330" marker-end="url(#m-rose)" fill="none"/>
+        <text class="lbl-rose" x="848" y="300">block · ruleId</text>
+
+        <rect class="box-rose" x="1042" y="298" width="68" height="64" rx="10"/>
+        <text class="lbl-rose" x="1052" y="322">refuse</text>
+        <text class="lbl-s" x="1052" y="340">R-01…15</text>
+
+        <path class="edge-rose" d="M1042,330 L600,330" marker-end="url(#m-rose)" fill="none"/>
+        <rect class="box-plain" x="430" y="298" width="170" height="64" rx="10"/>
+        <text class="lbl-b" x="446" y="322">Journal</text>
+        <text class="lbl-s" x="446" y="340">BLOCKED row + rule</text>
+
+        <path class="edge" d="M430,330 L392,330 L392,170 L430,170" marker-end="url(#m1)" fill="none" stroke-dasharray="5 4"/>
+        <text class="lbl-s" x="300" y="386">plan is editable — a changed field voids the old verdict</text>
+
+        <!-- the lesson -->
+        <rect class="box-warn" x="40" y="404" width="1070" height="122" rx="12"/>
+        <text class="lbl-amber" x="60" y="430">WHY THE REFUSAL IS THE PRODUCT</text>
+        <text class="lbl-s" x="60" y="454">A blocked verdict carries the rule id, its label, the numbers that failed, and what would have to change.</text>
+        <text class="lbl-s" x="60" y="474">It is journaled like an approval, shown in the same neutral treatment, and never styled as an error.</text>
+        <text class="lbl-s" x="60" y="494">That is the difference between a tool that flatters a user and a desk that teaches one.</text>
+        <text class="lbl-s" x="60" y="514" fill="#7ee068">done when: a beginner can explain their max loss at the stop without scrolling.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>Two lanes, nine steps, one veto.</b> Steps 5 (the verdict) and 6 are the only ones a model is
+      forbidden to influence; everything else may be assisted.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ D4 -->
+<section id="d4">
+  <h2><span>d4</span>One turn of Ninth, with its budgets</h2>
+  <p class="sub">
+    A deterministic router decides what the turn is about before a token is spent. The loop is ours,
+    bounded, and accepts a fake model — which is how 445 tests run without a network.
+  </p>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1150 520" role="img" aria-label="Turn pipeline: route, compose prompt, model call, tool dispatch, gate, repeat up to six steps, then answer and audit.">
+        <defs>
+          <marker id="m4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(190,255,200,0.6)"/>
+          </marker>
+          <marker id="m4-leaf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(126,224,104,0.85)"/>
+          </marker>
+          <marker id="m4-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(226,105,94,0.85)"/>
+          </marker>
+        </defs>
+
+        <!-- row 1 -->
+        <rect class="box-leaf" x="40" y="60" width="180" height="78" rx="10"/>
+        <text class="lbl-b" x="56" y="84">1 · Route</text>
+        <text class="lbl-s" x="56" y="102">normalise · inferStage</text>
+        <text class="lbl-s" x="56" y="118">score 12 skills · top 6</text>
+        <text class="lbl-s" x="56" y="132" fill="#7ee068">no clock · no randomness</text>
+
+        <rect class="box-plain" x="248" y="60" width="180" height="78" rx="10"/>
+        <text class="lbl-b" x="264" y="84">2 · Compose</text>
+        <text class="lbl-s" x="264" y="102">SOUL · AGENTS · desk</text>
+        <text class="lbl-s" x="264" y="118">6 obs · 3 learnings</text>
+        <text class="lbl-s" x="264" y="132">12k skill budget</text>
+
+        <rect class="box-warn" x="456" y="60" width="180" height="78" rx="10"/>
+        <text class="lbl-b" x="472" y="84">3 · Model</text>
+        <text class="lbl-s" x="472" y="102">Worker → provider</text>
+        <text class="lbl-s" x="472" y="118">SSE · 24k out tokens</text>
+        <text class="lbl-s" x="472" y="132" fill="#f0b775">optional: 503 = offline</text>
+
+        <rect class="box-plain" x="664" y="60" width="180" height="78" rx="10"/>
+        <text class="lbl-b" x="680" y="84">4 · Dispatch</text>
+        <text class="lbl-s" x="680" y="102">args parsed, not trusted</text>
+        <text class="lbl-s" x="680" y="118">17 tools · 4 tiers</text>
+        <text class="lbl-s" x="680" y="132">refs on every result</text>
+
+        <rect class="box-rose" x="872" y="60" width="180" height="78" rx="10"/>
+        <text class="lbl-b" x="888" y="84">5 · Gate</text>
+        <text class="lbl-s" x="888" y="102">kill switch · write cap</text>
+        <text class="lbl-s" x="888" y="118">tier 3 → confirm each</text>
+        <text class="lbl-s" x="888" y="132">tier 4 → manual only</text>
+
+        <line class="edge" x1="220" y1="99" x2="246" y2="99" marker-end="url(#m4)"/>
+        <line class="edge" x1="428" y1="99" x2="454" y2="99" marker-end="url(#m4)"/>
+        <line class="edge" x1="636" y1="99" x2="662" y2="99" marker-end="url(#m4)"/>
+        <line class="edge" x1="844" y1="99" x2="870" y2="99" marker-end="url(#m4)"/>
+
+        <!-- loop back -->
+        <path class="edge" d="M962,138 L962,196 L338,196 L338,140" marker-end="url(#m4)" fill="none"/>
+        <text class="lbl-s" x="470" y="190">repeat, ≤ 6 steps (MAX_STEPS)</text>
+
+        <!-- stop reasons -->
+        <rect class="box-plain" x="40" y="236" width="400" height="196" rx="12"/>
+        <text class="lbl" x="60" y="262">STOP REASONS · TurnResult</text>
+        <text class="lbl-s" x="60" y="286">done           a final answer, with refs</text>
+        <text class="lbl-s" x="60" y="308">steps          hit the 6-step cap</text>
+        <text class="lbl-s" x="60" y="330">tokens         hit 24,000 out</text>
+        <text class="lbl-s" x="60" y="352">pending        a human must confirm; no further calls</text>
+        <text class="lbl-s" x="60" y="374">blocked-twice  two refusals in one turn → stop</text>
+        <text class="lbl-s" x="60" y="400" fill="#7ee068">every turn writes an audit row (≤500, ring)</text>
+
+        <!-- second column budgets -->
+        <rect class="box-plain" x="470" y="236" width="320" height="196" rx="12"/>
+        <text class="lbl" x="490" y="262">BUDGETS · constants, not vibes</text>
+        <text class="lbl-s" x="490" y="286">MAX_INPUT_CHARS      2 000</text>
+        <text class="lbl-s" x="490" y="308">MAX_RESULT_CHARS     4 000</text>
+        <text class="lbl-s" x="490" y="330">MAX_WRITES_PER_TURN      3</text>
+        <text class="lbl-s" x="490" y="352">MAX_ROUTED_SKILLS        6</text>
+        <text class="lbl-s" x="490" y="374">PENDING_TTL        10 min</text>
+        <text class="lbl-s" x="490" y="396">MAX_TOKENS_OUT      24 000</text>
+        <text class="lbl-s" x="490" y="418">AUDIT_MAX_ROWS         500</text>
+
+        <!-- confirm -->
+        <rect class="box-leaf" x="820" y="236" width="290" height="196" rx="12"/>
+        <text class="lbl-leaf" x="840" y="262">THE EDGE THAT MATTERS</text>
+        <text class="lbl-s" x="840" y="288">PendingCall</text>
+        <text class="lbl-s" x="840" y="306">{ token · tool · args · tier }</text>
+        <text class="lbl-s" x="840" y="332">single use · 10-minute TTL</text>
+        <text class="lbl-s" x="840" y="354">only a click calls confirmPending</text>
+        <text class="lbl-s" x="840" y="376" fill="#e2695e">the model can never spend it</text>
+        <text class="lbl-s" x="840" y="402">tier 2 remembered per session,</text>
+        <text class="lbl-s" x="840" y="420">tier 3 asked every single time</text>
+
+        <!-- offline strip -->
+        <rect class="box-warn" x="40" y="456" width="1070" height="46" rx="10"/>
+        <text class="lbl-amber" x="60" y="484">OFFLINE INVARIANT: with no MODEL_API_KEY the loop still answers from the desk and every slash command still works. The demo is the default, not the fallback.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>Why the router runs first:</b> a deterministic route costs nothing and makes the prompt smaller — the
+      same reason Minara routes before generating. The model is the only expensive step, so it is the only
+      step that is optional.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ D5 -->
+<section id="d5">
+  <h2><span>d5</span>Routing: three maps that must agree</h2>
+  <p class="sub">
+    URLs, HTTP routes and intent. They share one vocabulary: <code>desk</code>, <code>gate</code>,
+    <code>journal</code>, <code>ticket</code>, <code>setup</code>. A user should be able to guess an API
+    path from a page name.
+  </p>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1150 600" role="img" aria-label="Route map: pages grouped by layout, API endpoints, and the agent intent router with its score weights.">
+        <defs>
+          <marker id="m5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(190,255,200,0.55)"/>
+          </marker>
+        </defs>
+
+        <!-- COLUMN 1: pages -->
+        <rect class="box" x="30" y="40" width="360" height="520" rx="14"/>
+        <text class="lbl-b" x="50" y="68">URL ROUTES · lib/routes.ts</text>
+        <text class="lbl-s" x="50" y="86">layout picks the frame</text>
+
+        <text class="lbl-s" x="50" y="118" fill="#7ee068">SITE · nav + footer</text>
+        <rect class="box-plain" x="50" y="128" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="146">/                 landing</text>
+        <rect class="box-plain" x="50" y="158" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="176">/pricing          plans, no checkout</text>
+        <rect class="box-plain" x="50" y="188" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="206">/about            why refusal first</text>
+        <rect class="box-plain" x="50" y="218" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="236">/styleguide       the design system</text>
+
+        <text class="lbl-s" x="50" y="270" fill="#7ee068">BARE · auth</text>
+        <rect class="box-plain" x="50" y="280" width="155" height="26" rx="6"/><text class="lbl-s" x="62" y="298">/login</text>
+        <rect class="box-plain" x="215" y="280" width="155" height="26" rx="6"/><text class="lbl-s" x="227" y="298">/signup</text>
+
+        <text class="lbl-s" x="50" y="332" fill="#7ee068">APP · desk shell</text>
+        <rect class="box-plain" x="50" y="342" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="360">/app              today's desk</text>
+        <rect class="box-plain" x="50" y="372" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="390">/app/charts       Vela + Pine</text>
+        <rect class="box-plain" x="50" y="402" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="420">/app/risk         the gate, explained</text>
+        <rect class="box-plain" x="50" y="432" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="450">/app/journal      calendar + export</text>
+        <rect class="box-plain" x="50" y="462" width="320" height="26" rx="6"/><text class="lbl-s" x="62" y="480">/app/chat         Ninth, full page</text>
+
+        <text class="lbl-s" x="50" y="510" fill="#f0b775">DYNAMIC · matched, not in the table yet</text>
+        <rect class="box-plain" x="50" y="518" width="155" height="26" rx="6"/><text class="lbl-s" x="62" y="536">/app/setup/:symbol</text>
+        <rect class="box-plain" x="215" y="518" width="155" height="26" rx="6"/><text class="lbl-s" x="227" y="536">/app/session/:s/:d</text>
+
+        <!-- COLUMN 2: API -->
+        <rect class="box" x="410" y="40" width="360" height="520" rx="14"/>
+        <text class="lbl-b" x="430" y="68">HTTP · Worker</text>
+        <text class="lbl-s" x="430" y="86">one envelope: ApiResult&lt;T&gt;</text>
+
+        <text class="lbl-s" x="430" y="118" fill="#7ee068">READ</text>
+        <rect class="box-plain" x="430" y="128" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="145">GET  /api/health</text>
+        <rect class="box-plain" x="430" y="156" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="173">GET  /api/market/universe</text>
+        <rect class="box-plain" x="430" y="184" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="201">GET  /api/market/bars?symbol=</text>
+        <rect class="box-plain" x="430" y="212" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="229">GET  /api/desk/scan</text>
+        <rect class="box-plain" x="430" y="240" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="257">GET  /api/news?symbols=</text>
+
+        <text class="lbl-s" x="430" y="290" fill="#7ee068">DECIDE · pure, no side effects</text>
+        <rect class="box-leaf" x="430" y="300" width="320" height="30" rx="6"/><text class="lbl-b" x="442" y="320">POST /api/risk/check → GateVerdict</text>
+        <rect class="box-plain" x="430" y="336" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="353">POST /api/simulate</text>
+
+        <text class="lbl-s" x="430" y="386" fill="#f0b775">WRITE · tiny, and currently inert</text>
+        <rect class="box-plain" x="430" y="396" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="413">POST /api/signup · login</text>
+        <rect class="box-plain" x="430" y="424" width="320" height="24" rx="6"/><text class="lbl-s" x="442" y="441">POST /api/subscribe · contact</text>
+        <text class="lbl-s" x="442" y="462" fill="#e2695e">validate, discard, return ok — fix in phase 2</text>
+
+        <text class="lbl-s" x="430" y="492" fill="#7ee068">MODEL · the only route with a cost</text>
+        <rect class="box-warn" x="430" y="500" width="320" height="50" rx="6"/>
+        <text class="lbl-s" x="442" y="518">GET  /api/ninth/model      configured?</text>
+        <text class="lbl-s" x="442" y="536">POST /api/ninth/turn       SSE, same-origin</text>
+
+        <!-- COLUMN 3: agent -->
+        <rect class="box" x="790" y="40" width="330" height="520" rx="14"/>
+        <text class="lbl-b" x="810" y="68">INTENT · ninth/router.ts</text>
+        <text class="lbl-s" x="810" y="86">deterministic, explainable</text>
+
+        <text class="lbl-s" x="810" y="118" fill="#7ee068">SCORE WEIGHTS</text>
+        <rect class="box-plain" x="810" y="126" width="290" height="150" rx="8"/>
+        <text class="lbl-s" x="824" y="148">keyword hit            30  ×2 max</text>
+        <text class="lbl-s" x="824" y="170">stage matches          20</text>
+        <text class="lbl-s" x="824" y="192">asset word             15</text>
+        <text class="lbl-s" x="824" y="214">co-activation          10</text>
+        <text class="lbl-s" x="824" y="236">fired watch signal     25</text>
+        <text class="lbl-s" x="824" y="258">floor                  10</text>
+        <text class="lbl-s" x="824" y="274" fill="#e2695e">negative keyword → −∞</text>
+
+        <text class="lbl-s" x="810" y="304" fill="#7ee068">STAGES</text>
+        <rect class="box-plain" x="810" y="312" width="290" height="120" rx="8"/>
+        <text class="lbl-s" x="824" y="334">discover   show · scan · price</text>
+        <text class="lbl-s" x="824" y="356">evaluate   why · blocked · odds</text>
+        <text class="lbl-s" x="824" y="378">decide     should i · size · ticket</text>
+        <text class="lbl-s" x="824" y="400">manage     journal · remember · set</text>
+        <text class="lbl-s" x="824" y="422" fill="#7ee068">each skill declares its stages</text>
+
+        <text class="lbl-s" x="810" y="458" fill="#7ee068">TOOLS</text>
+        <rect class="box-plain" x="810" y="466" width="290" height="70" rx="8"/>
+        <text class="lbl-s" x="824" y="488">always: activate · search · ask · why</text>
+        <text class="lbl-s" x="824" y="510">        quote · account · memory</text>
+        <text class="lbl-s" x="824" y="530">routed: the skill's declared tools only</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>The vocabulary test:</b> <code>/app/risk</code> ↔ <code>/api/risk/check</code> ↔ skill
+      <code>desk.gate</code>. If a new feature cannot be named in all three places with the same word, it is
+      probably two features.
+    </figcaption>
+  </figure>
+</section>
+
+<!-- ============================================================ D6 -->
+<section id="d6">
+  <h2><span>d6</span>Plan and ticket: the two state machines</h2>
+  <p class="sub">
+    A plan is a proposal. A ticket is a promise. They move separately, and the only transition between them
+    is a human confirmation that a verdict still supports.
+  </p>
+  <figure>
+    <div class="canvas">
+      <svg viewBox="0 0 1150 470" role="img" aria-label="Two state machines: plan draft checked approved or blocked ticketed, and ticket proposed confirmed filled closed or cancelled expired.">
+        <defs>
+          <marker id="m6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(190,255,200,0.6)"/>
+          </marker>
+          <marker id="m6-leaf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(126,224,104,0.85)"/>
+          </marker>
+          <marker id="m6-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="rgba(226,105,94,0.85)"/>
+          </marker>
+        </defs>
+
+        <!-- PLAN lane -->
+        <text class="lbl-s" x="40" y="44">TRADEPLAN.STATUS</text>
+        <rect class="box-plain" x="40" y="56" width="120" height="44" rx="8"/>
+        <text class="lbl-b" x="56" y="84">draft</text>
+        <rect class="box-plain" x="196" y="56" width="120" height="44" rx="8"/>
+        <text class="lbl-b" x="210" y="84">checked</text>
+        <rect class="box-leaf" x="352" y="26" width="126" height="44" rx="8"/>
+        <text class="lbl-b" x="366" y="54">approved</text>
+        <rect class="box-rose" x="352" y="90" width="126" height="44" rx="8"/>
+        <text class="lbl-b" x="366" y="118">blocked</text>
+        <rect class="box-leaf" x="514" y="56" width="120" height="44" rx="8"/>
+        <text class="lbl-b" x="528" y="84">ticketed</text>
+
+        <line class="edge" x1="160" y1="78" x2="194" y2="78" marker-end="url(#m6)"/>
+        <text class="lbl-s" x="160" y="70">check</text>
+        <path class="edge-leaf" d="M316,70 L336,70 L336,48 L350,48" marker-end="url(#m6-leaf)" fill="none"/>
+        <path class="edge-rose" d="M316,86 L336,86 L336,112 L350,112" marker-end="url(#m6-rose)" fill="none"/>
+        <line class="edge-leaf" x1="478" y1="48" x2="512" y2="70" marker-end="url(#m6-leaf)"/>
+        <text class="lbl-s" x="480" y="38">ticket confirmed</text>
+        <path class="edge" d="M352,120 L246,120 L246,102" marker-end="url(#m6)" fill="none"/>
+        <text class="lbl-s" x="252" y="152">edit any field → verdict void</text>
+
+        <!-- TICKET lane -->
+        <text class="lbl-s" x="40" y="222">PAPERTICKET.STATE</text>
+        <rect class="box-plain" x="40" y="234" width="130" height="44" rx="8"/>
+        <text class="lbl-b" x="54" y="262">proposed</text>
+        <rect class="box-leaf" x="212" y="234" width="130" height="44" rx="8"/>
+        <text class="lbl-b" x="226" y="262">confirmed</text>
+        <rect class="box-plain" x="384" y="234" width="130" height="44" rx="8"/>
+        <text class="lbl-b" x="398" y="262">filled</text>
+        <rect class="box-plain" x="556" y="234" width="130" height="44" rx="8"/>
+        <text class="lbl-b" x="570" y="262">closed</text>
+
+        <line class="edge-leaf" x1="170" y1="256" x2="210" y2="256" marker-end="url(#m6-leaf)"/>
+        <text class="lbl-s" x="176" y="300">human click</text>
+        <line class="edge" x1="342" y1="256" x2="382" y2="256" marker-end="url(#m6)"/>
+        <text class="lbl-s" x="350" y="300">entry touched</text>
+        <line class="edge" x1="514" y1="256" x2="554" y2="256" marker-end="url(#m6)"/>
+        <text class="lbl-s" x="522" y="300">target · stop · flat-by</text>
+
+        <path class="edge-rose" d="M720,256 L760,256" marker-end="url(#m6-rose)"/>
+        <rect class="box-rose" x="762" y="234" width="130" height="44" rx="8"/>
+        <text class="lbl-rose" x="776" y="262">cancelled / expired</text>
+
+        <path class="edge-faint" d="M105,278 L105,330 L700,330 L700,280" marker-end="url(#m6)" fill="none"/>
+        <text class="lbl-s" x="300" y="324">expires at 10 min (unconfirmed) or at the session close (unfilled)</text>
+
+        <!-- guard box -->
+        <rect class="box-warn" x="40" y="356" width="1070" height="94" rx="12"/>
+        <text class="lbl-amber" x="60" y="382">TWO GUARDS ON THE ONLY DANGEROUS EDGE</text>
+        <text class="lbl-s" x="60" y="406">1 · ticketProblem(ticket, verdict) — an approved verdict cannot rescue a ticket whose plan drifted.</text>
+        <text class="lbl-s" x="60" y="428">2 · single-use confirmation token, 10-minute TTL, spent only by a UI click; tier 2 remembered per session, tier 3 never.</text>
+        <text class="lbl-s" x="60" y="446" fill="#7ee068">Both are pure functions with tests. Neither reads a model, a clock inline, or the network.</text>
+      </svg>
+    </div>
+    <figcaption>
+      <b>Why two machines:</b> a plan can be re-planned all day without consequence; a ticket changes what
+      the journal will say. Separating them is what lets the desk be exploratory and the record be exact.
+    </figcaption>
+  </figure>
+</section>
+
+<footer class="foot">
+  <p>
+    Figures are hand-authored SVG — no rendering library, no network, prints to A4. Companion text:
+    <a href="README.md" style="color:#7ee068">README.md</a> and chapters 01–07 in this directory.
+  </p>
+  <p>Rook · the AI trading desk · paper only · not financial advice · every number carries a source.</p>
+</footer>
+
+</div>
+</body>
+</html>
