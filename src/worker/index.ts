@@ -235,6 +235,40 @@ app.post('/api/ninth/turn', async (c) => {
 
 app.all('/api/*', (c) => c.json({ ok: false, error: 'Not found' }, 404))
 
+/*
+  The docs are for agents first. They are plain markdown in `public/`, served with
+  the content type a reader expects and a `rel="llms"` link back to the index, so a
+  crawler that finds one page finds the rest. The allowlist keeps a typo from
+  returning the SPA fallback dressed up as a document.
+*/
+const DOCS = ['index', 'rules', 'journal', 'ninth', 'skill'] as const
+
+async function serveMarkdown(c: { req: { url: string }; env: Env }, path: string): Promise<Response> {
+  const asset = await c.env.ASSETS.fetch(new Request(new URL(path, c.req.url).toString()))
+  const type = asset.headers.get('content-type') ?? ''
+  if (!asset.ok || type.includes('text/html')) {
+    return Response.json({ ok: false, error: `No document at ${path}.` }, { status: 404 })
+  }
+  return new Response(asset.body, {
+    headers: {
+      'content-type': 'text/markdown; charset=utf-8',
+      'cache-control': 'public, max-age=300',
+      link: '</llms.txt>; rel="llms"',
+    },
+  })
+}
+
+app.get('/llms.txt', (c) => serveMarkdown(c, '/llms.txt'))
+
+app.get('/docs/:file', (c) => {
+  const file = c.req.param('file')
+  const match = /^([a-z]+)\.md$/.exec(file)
+  if (!match || !(DOCS as readonly string[]).includes(match[1])) {
+    return c.json({ ok: false, error: `Docs: ${DOCS.map((d) => `/docs/${d}.md`).join(', ')}` }, 404)
+  }
+  return serveMarkdown(c, `/docs/${file}`)
+})
+
 app.all('*', (c) => c.env.ASSETS.fetch(c.req.raw))
 
 export default app

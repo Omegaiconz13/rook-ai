@@ -93,11 +93,18 @@ Cheap, and it makes everything before it legible.
 
 | # | Task | Notes |
 |---|---|---|
-| 4.1 | `public/llms.txt` + `public/docs/*.md` served as `text/markdown` | generated from `routes.ts` where possible |
+| 4.1 | ✅ `public/llms.txt` + `public/docs/*.md` served as `text/markdown` | shipped; hand-written for now, moves to generation from `routes.ts` when 1.5 lands |
 | 4.2 | `skills/rook-desk/` (SKILL.md, setup.md, references, version-check) | structure copied from Minara's MIT pack; refusals are the skill's core rule |
 | 4.3 | `/benchmark` page projecting the journal (no new store) | cannot be faked: it is a pure function of the audit log |
 | 4.4 | Read-only API: `GET /v1/rules`, `POST /v1/check-plan`, `GET /v1/journal`, `GET /v1/benchmark` — no auth, 60 req/min/IP, **no model calls** | Rook's version of a structured-output API, free |
 | 4.5 | `docs/MEDIA.md` + 6 curated screenshots | replaces the 36 MB `artifacts/` |
+
+**Shipped early.** 4.1 is done ahead of Phases 1–3 because it is the cheapest way to make the
+product legible: `public/llms.txt` plus five documents (`index`, `rules`, `journal`, `ninth`,
+`skill`), a `GET /llms.txt` and `GET /docs/:file` route in the Worker that serves them as
+`text/markdown; charset=utf-8` with `Link: </llms.txt>; rel="llms"`, an allowlist so a typo
+cannot return the SPA shell as a document, and ten tests in `src/worker/docs.test.ts`. The
+documented `POST /api/risk/check` examples are transcripts of real responses.
 
 **Exit criteria.** An agent can read the rules and call the gate and get the same verdict string the UI
 shows. The benchmark page reconciles exactly with the journal export (tested). Installing the skill into a

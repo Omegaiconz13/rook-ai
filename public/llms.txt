@@ -1,0 +1,25 @@
+# Rook
+
+> Rook is a paper trading desk for one trade at a time. It scans a session for
+> setups, sizes a plan against written limits, and returns a verdict from a pure
+> function that a model cannot influence. Every verdict — including every refusal —
+> is journaled. No orders are placed, no account is connected, no custody exists.
+
+Rook runs as a static React app with one Worker in front of it. State lives in the
+browser; the Worker serves the session and runs the same risk gate the page runs.
+The model is optional: with no key it still answers from the desk.
+
+## Docs
+
+- [index.md](/docs/index.md): what the desk does, the vocabulary, and what an agent may do here.
+- [rules.md](/docs/rules.md): the fifteen gate rules, the verdict shape, and `POST /api/risk/check` with a worked example.
+- [journal.md](/docs/journal.md): the record format (schema 2), its fields, its limits, and the export bundle.
+- [ninth.md](/docs/ninth.md): the agent harness — routing, twelve skills, seventeen tools, budgets, stop reasons, slash commands.
+- [skill.md](/docs/skill.md): the operating contract for an agent using this surface, including the refusal contract.
+
+## Boundaries
+
+- Paper only. Nothing on this surface places, routes or settles an order.
+- The gate is a pure function. A model may explain a verdict; it may not produce one.
+- Refusals are data. A blocked verdict carries a rule id and the numbers that failed.
+- No accounts, no cookies, no server-side rows. The journal is the reader's browser.
