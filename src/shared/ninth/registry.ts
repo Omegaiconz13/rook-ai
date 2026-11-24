@@ -1,5 +1,6 @@
 import { parseArgs } from './args'
 import { fail } from './result'
+import { DECIDE_TOOLS } from './tools/decide'
 import { READ_TOOLS } from './tools/read'
 import type { ToolEntry, ToolOutcome, ToolSet, TurnContext } from './types'
 
@@ -15,7 +16,7 @@ import type { ToolEntry, ToolOutcome, ToolSet, TurnContext } from './types'
   skipped it.
 */
 
-const TOOLS: ToolEntry[] = [...READ_TOOLS]
+const TOOLS: ToolEntry[] = [...READ_TOOLS, ...DECIDE_TOOLS]
 const BY_NAME = new Map(TOOLS.map((tool) => [tool.name, tool]))
 
 export function allTools(): readonly ToolEntry[] {
