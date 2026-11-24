@@ -155,8 +155,12 @@ describe('allowedTools', () => {
     for (const tool of every) expect(known.has(tool)).toBe(true)
   })
 
-  test('keeps route_why out until it is built', () => {
-    expect(allowedTools(ask('why was it blocked?'))).not.toContain('route_why')
+  test('offers route_why now that it is built, and still drops the tools that are not', () => {
+    const tools = allowedTools(ask('why was it blocked?'))
+    expect(tools).toContain('route_why')
+    expect(tools).not.toContain('activate_skills')
+    expect(tools).not.toContain('ask_user')
+    expect(tools).not.toContain('journal_append')
   })
 
   test('finds every skill by id', () => {
