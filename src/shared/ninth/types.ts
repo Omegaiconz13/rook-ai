@@ -62,6 +62,8 @@ export type ToolEntry = {
   /** One line: what it reads and what it gives back. */
   description: string
   args: ArgsSpec
+  /** A ticket or a size may only be written from a verdict produced this turn. */
+  needsVerdict?: boolean
   run: (args: Args, ctx: TurnContext) => ToolOutcome
 }
 
