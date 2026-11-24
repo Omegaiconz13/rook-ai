@@ -124,8 +124,20 @@ export function observationLines(list: Observation[], limit = OBSERVATIONS_IN_PR
 
 export type Recall = { index: number; score: number }
 
+/**
+ * Words that appear in almost every sentence. Left in, they make any two
+ * documents look related: a learning about the open shared the word "the" with
+ * a question about the gate and was injected beside the one that mattered.
+ */
+const STOPWORDS = new Set(
+  'a an and are as at be been before being but by can could did do does for from had has have he her here how i if in into is it its just may me might more most must my no not of on or our out over same she should so some such than that the their them then there these they this those to too up very was we were what when where which who why will with would you your'.split(
+    ' ',
+  ),
+)
+
 function tokenize(text: string): string[] {
-  return text.toLowerCase().match(/[a-z0-9']+/g) ?? []
+  const tokens = text.toLowerCase().match(/[a-z0-9']+/g) ?? []
+  return tokens.filter((token) => !STOPWORDS.has(token))
 }
 
 function counts(tokens: string[]): Map<string, number> {

@@ -1,11 +1,14 @@
 import type { AuditRow, AuditStatus } from './audit'
 import { gateGuard, openGate } from './gate'
 import type { GateState } from './gate'
+import { reviewTurn, sameQuestion } from './learning'
+import type { Review } from './learning'
+import { observationLines, recallLearnings, workspaceLines } from './memory'
 import { buildPrompt } from './prompt'
 import { dispatch, toolByName } from './registry'
 import { allowedTools, route } from './router'
 import type { RoutedSkill } from './router'
-import type { Tier, ToolOutcome, TurnContext } from './types'
+import type { StopReason, Tier, ToolOutcome, TurnContext } from './types'
 import { MAX_INPUT_CHARS, MAX_STEPS, MAX_TOKENS_OUT } from './types'
 
 /*
@@ -62,7 +65,8 @@ export type TurnResult = {
   steps: number
   tokensIn: number
   tokensOut: number
-  stopped: 'done' | 'steps' | 'tokens' | 'pending' | 'blocked-twice'
+  stopped: StopReason
+  review: Review
   audit: AuditRow[]
 }
 
@@ -86,6 +90,8 @@ export async function runTurn(args: {
   emit?: (event: TurnEvent) => void
   now?: () => number
   id?: () => string
+  /** The questions already asked this session, for the review's repeat check. */
+  asked?: string[]
 }): Promise<TurnResult> {
   const now = args.now ?? Date.now
   const nextId = args.id ?? (() => crypto.randomUUID())
@@ -97,7 +103,15 @@ export async function runTurn(args: {
   const tools = allowedTools(skills)
   emit({ t: 'route', skills })
 
-  const prompt = buildPrompt({ routed: skills, tools, desk: args.ctx.desk })
+  const memory = args.ctx.memory
+  const prompt = buildPrompt({
+    routed: skills,
+    tools,
+    desk: args.ctx.desk,
+    workspace: memory ? workspaceLines(memory.workspace) : undefined,
+    memory: memory ? observationLines(memory.observations) : undefined,
+    learnings: memory ? recallLearnings(memory.learnings, question) : undefined,
+  })
   const messages: ModelMessage[] = [{ role: 'user', text: question }]
   const rows: AuditRow[] = []
   const refs: string[] = []
@@ -107,7 +121,7 @@ export async function runTurn(args: {
   let tokensIn = 0
   let tokensOut = 0
   let blocks = 0
-  let stopped: TurnResult['stopped'] = 'done'
+  let stopped: StopReason = 'done'
 
   const row = (over: Partial<AuditRow> & Pick<AuditRow, 'kind' | 'status'>): AuditRow => ({
     id: nextId(),
@@ -214,6 +228,17 @@ export async function runTurn(args: {
     }),
   )
 
+  const toolRows = rows.filter((entry) => entry.kind === 'tool')
+  const review = reviewTurn({
+    traceId: args.ctx.traceId,
+    toolCalls: toolRows.length,
+    gateConsulted: toolRows.some((entry) => entry.tool === 'gate_check') || refs.includes('gate'),
+    refs: refs.length,
+    blocked: blocks,
+    stopped,
+    reasked: (args.asked ?? []).some((prior) => sameQuestion(prior, question)),
+  })
+
   return {
     traceId: args.ctx.traceId,
     question,
@@ -224,6 +249,7 @@ export async function runTurn(args: {
     tokensIn,
     tokensOut,
     stopped,
+    review,
     audit: rows,
   }
 }

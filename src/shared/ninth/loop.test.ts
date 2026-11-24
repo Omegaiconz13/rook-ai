@@ -4,7 +4,10 @@ import { deterministicModel } from './answer'
 import type { AuditRow } from './audit'
 import { openGate } from './gate'
 import type { Model, ModelCallInput, ModelReply, TurnEvent } from './loop'
+import { runCommand } from './commands'
 import { runTurn } from './loop'
+import { emptyMemory } from './memory'
+import type { MemorySnapshot } from './memory'
 import { testContext } from './testctx'
 import { MAX_INPUT_CHARS, MAX_STEPS, MAX_TOKENS_OUT } from './types'
 
@@ -153,6 +156,76 @@ describe('a turn', () => {
     const model = fakeModel([{ text: 'ok' }])
     const result = await runTurn({ question: 'a'.repeat(3_000), ctx: testContext(), model })
     expect(result.question.length).toBe(MAX_INPUT_CHARS)
+  })
+})
+
+describe('memory in a turn', () => {
+  const memory: MemorySnapshot = {
+    workspace: { facts: ['paper only'], preferences: ['no shorts before 10:00'], decisions: [] },
+    observations: [
+      { id: 'o1', section: 'note' as const, text: 'the open was quiet', createdAt: '2026-11-19T14:35:00.000Z', session: '2026-11-19' },
+    ],
+    learnings: [
+      { id: 'l1', trigger: 'the gate blocks on R-12', guidance: 'quote the rule id', sequence: ['gate_check'], success: 2, failure: 0, lastUsed: null },
+      { id: 'l2', trigger: 'the open is quiet', guidance: 'read levels first', sequence: ['list_levels'], success: 5, failure: 1, lastUsed: null },
+    ],
+  }
+
+  test('prints the workspace ahead of observations and recalls only the matching learning', async () => {
+    const model = fakeModel([{ text: 'ok' }])
+    await runTurn({ question: 'why was the gate blocked?', ctx: { ...testContext(), memory }, model })
+    const system = model.calls[0].system
+    expect(system).toContain('Fact: paper only')
+    expect(system).toContain('[note] the open was quiet')
+    expect(system).toContain('the gate blocks on R-12')
+    expect(system).not.toContain('read levels first')
+    expect(system).toContain('unproven: 2 uses')
+  })
+
+  test('reviews a three-tool turn and marks it a candidate learning', async () => {
+    const model = fakeModel([
+      {
+        calls: [
+          { id: 'c1', name: 'get_quote', args: { symbol: 'TSLA' } },
+          { id: 'c2', name: 'list_setups', args: { symbol: 'TSLA' } },
+          { id: 'c3', name: 'list_levels', args: { symbol: 'TSLA' } },
+        ],
+      },
+      { text: 'read all three' },
+    ])
+    const result = await runTurn({ question: 'where are the levels?', ctx: testContext(), model })
+    expect(result.review.score).toBe(8)
+    expect(result.review.candidate).toBe(true)
+    expect(result.review.reasons).toContain('tools:3')
+  })
+
+  test('a fact added with /memory is in the very next prompt', async () => {
+    const added = runCommand('/memory add preference: no shorts before 10:00', {
+      memory: emptyMemory(),
+      audit: [],
+      today: '2026-11-19',
+    })
+    if (!added.handled || !added.workspace) throw new Error('expected a workspace')
+
+    const model = fakeModel([{ text: 'ok' }])
+    const base = testContext()
+    await runTurn({
+      question: 'where are the levels?',
+      ctx: { ...base, memory: { ...emptyMemory(), workspace: added.workspace } },
+      model,
+    })
+    expect(model.calls[0].system).toContain('Preference: no shorts before 10:00')
+  })
+
+  test('drops the no-repeat point when the same question comes back', async () => {
+    const model = fakeModel([{ text: 'ok' }])
+    const result = await runTurn({
+      question: 'why was it blocked?',
+      ctx: testContext(),
+      model,
+      asked: ['Why was it  blocked?'],
+    })
+    expect(result.review.reasons).not.toContain('no-repeat')
   })
 })
 

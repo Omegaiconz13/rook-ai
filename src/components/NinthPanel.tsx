@@ -191,6 +191,9 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
                 </Button>
               ))}
             </div>
+            <p className="text-[12.5px] text-faint">
+              Commands: /memory (list, add, forget) · /trace (last turn's routing and tools)
+            </p>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -210,6 +213,12 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
                     <p className="mt-1 text-[11.5px] text-faint">
                       routed: {message.skills.map((skill) => `${skill.id} ${skill.score.toFixed(0)}`).join(' · ')}
                     </p>
+                    {message.review && (
+                      <p className="mt-1 text-[11.5px] text-faint">
+                        turn score {message.review.score}
+                        {message.review.candidate ? ' · candidate learning' : ''}
+                      </p>
+                    )}
                     <ul className="mt-1 grid gap-0.5 text-[11.5px] text-faint">
                       {message.tools && message.tools.length > 0 ? (
                         message.tools.map((tool) => (
