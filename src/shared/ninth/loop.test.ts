@@ -200,15 +200,16 @@ describe('memory in a turn', () => {
   })
 
   test('a fact added with /memory is in the very next prompt', async () => {
+    const base = testContext()
     const added = runCommand('/memory add preference: no shorts before 10:00', {
       memory: emptyMemory(),
       audit: [],
+      desk: base.desk,
       today: '2026-11-19',
     })
     if (!added.handled || !added.workspace) throw new Error('expected a workspace')
 
     const model = fakeModel([{ text: 'ok' }])
-    const base = testContext()
     await runTurn({
       question: 'where are the levels?',
       ctx: { ...base, memory: { ...emptyMemory(), workspace: added.workspace } },

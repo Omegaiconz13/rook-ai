@@ -148,7 +148,7 @@ export function useNinth(desk: DeskSnapshot) {
     if (!text) return
     const snapshot = deskRef.current
 
-    const command = runCommand(text, { memory: readMemory(), audit: readAudit(), today: snapshot.today })
+    const command = runCommand(text, { memory: readMemory(), audit: readAudit(), desk: snapshot, today: snapshot.today })
     if (command.handled) {
       if (command.workspace) writeStore(NINTH_KEYS.workspace, command.workspace)
       append(text, command.text, command.refs)

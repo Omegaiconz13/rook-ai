@@ -1,4 +1,3 @@
-import { checkPlan, RULES } from '../../risk'
 import type { GateVerdict, TradePlan } from '../../risk'
 import { dailyLossCents, DECIDING_LABEL, maxRiskCents, money, price, rewardRisk, sizeFor, usdToCents } from '../../sizing'
 import { deskSetups, planFromSetup } from '../../setups'
@@ -7,6 +6,7 @@ import { simulate } from '../../simulate'
 import { num, str } from '../args'
 import { fail, ok } from '../result'
 import type { Args, ToolEntry, TurnContext } from '../types'
+import { ruleLabel, verdictForPlan } from '../verdict'
 
 /*
   Tier 2: the tools that decide. Every figure they return is produced by the
@@ -61,16 +61,6 @@ function planFromPrices(args: Args, ctx: TurnContext): { plan?: TradePlan; why?:
       provenance: 'user',
     },
   }
-}
-
-/** The account as the gate expects it: equity is always the written limits' equity. */
-function gateAccount(ctx: TurnContext) {
-  return { ...ctx.desk.account, equityCents: ctx.desk.limits.equityCents }
-}
-
-function ruleLabel(ruleId: GateVerdict['ruleId']): string | null {
-  if (!ruleId) return null
-  return RULES.find((rule) => rule.id === ruleId)?.label ?? null
 }
 
 function verdictRow(verdict: GateVerdict, plan: TradePlan) {
@@ -128,13 +118,7 @@ const gateCheck: ToolEntry = {
       plan = built.plan
     }
 
-    const verdict = checkPlan({
-      plan,
-      limits: ctx.desk.limits,
-      account: gateAccount(ctx),
-      session: ctx.desk.session,
-      history: ctx.desk.confirmed.filter((entry) => entry.sessionDate === ctx.desk.today),
-    })
+    const verdict = verdictForPlan(ctx.desk, plan)
     return ok(verdictRow(verdict, plan), ['gate', verdict.ruleId ? `rule:${verdict.ruleId}` : 'sizing'])
   },
 }

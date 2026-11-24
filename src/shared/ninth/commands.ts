@@ -1,20 +1,25 @@
 import { auditFor, lastTrace } from './audit'
 import type { AuditRow } from './audit'
+import { draftStrategy, draftText } from './draft'
 import { learningProof } from './learning'
 import { addWorkspaceLine, removeWorkspaceLine, workspaceLines } from './memory'
 import type { MemorySnapshot, Workspace } from './memory'
+import { reviewSetup, reviewText } from './review'
+import type { DeskSnapshot } from './types'
 
 /*
-  The two commands that need no model and no turn: `/memory` and `/trace`. They
-  are pure functions over what the browser holds, so the panel can run them with
-  a key, without a key, and in a test. `/memory` writes only the user's workspace
-  — Ninth's observations and learnings are never edited from here — and `/trace`
-  only reads the audit log.
+  The commands that need no model and no turn: `/memory`, `/trace`, `/review` and
+  `/draft`. They are pure functions over what the browser holds, so the panel can
+  run them with a key, without a key, and in a test. `/memory` writes only the
+  user's workspace — Ninth's observations and learnings are never edited from
+  here — `/trace` only reads the audit log, and Review and Draft only read.
 */
 
 export type CommandState = {
   memory: MemorySnapshot
   audit: AuditRow[]
+  /** The desk as the panel sees it; `/review` and `/draft` read it. */
+  desk: DeskSnapshot
   today: string
 }
 
@@ -22,7 +27,7 @@ export type CommandOutcome =
   | { handled: false }
   | { handled: true; text: string; refs: string[]; workspace?: Workspace }
 
-export const COMMANDS = ['/memory', '/trace'] as const
+export const COMMANDS = ['/memory', '/trace', '/review', '/draft'] as const
 
 export function runCommand(question: string, state: CommandState): CommandOutcome {
   const text = question.trim()
@@ -34,7 +39,26 @@ export function runCommand(question: string, state: CommandState): CommandOutcom
 
   if (command === '/memory') return memoryCommand(argument, state)
   if (command === '/trace') return traceCommand(state.audit)
+  if (command === '/review') return reviewCommand(argument, state.desk)
+  if (command === '/draft') return draftCommand(argument, state.desk)
   return { handled: true, text: `Commands: ${COMMANDS.join(' · ')}.`, refs: [] }
+}
+
+/** `/review [SYMBOL|setupId]` — four fixed roles over a setup the rule produced. */
+function reviewCommand(argument: string, desk: DeskSnapshot): CommandOutcome {
+  const outcome = reviewSetup({ desk, argument })
+  return outcome.ok
+    ? { handled: true, text: reviewText(outcome.record), refs: outcome.record.refs }
+    : { handled: true, text: outcome.why, refs: outcome.refs }
+}
+
+/** `/draft <symbol> <rule>` — a Pine draft, then the desk's replay of the same rule. */
+function draftCommand(argument: string, desk: DeskSnapshot): CommandOutcome {
+  if (!argument) return { handled: true, text: 'Use /draft <symbol> <rule>, e.g. /draft TSLA orb.', refs: ['setups:desk'] }
+  const outcome = draftStrategy({ text: argument, desk })
+  return outcome.ok
+    ? { handled: true, text: draftText(outcome.draft), refs: outcome.draft.refs }
+    : { handled: true, text: outcome.why, refs: outcome.refs }
 }
 
 const SECTION_KEY: Record<string, keyof Workspace> = { fact: 'facts', preference: 'preferences', decision: 'decisions' }

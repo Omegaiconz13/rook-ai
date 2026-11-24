@@ -30,7 +30,14 @@ export function ChatBubble({ from, children, text, cite, error, onRetry, compact
           error && 'border-danger/40 bg-danger-soft text-danger',
         )}
       >
-        {text !== undefined ? <Rich text={text} /> : children}
+        {/* pre-wrap: command output and a Pine draft are lines, and a Pine block is indented. */}
+        {text !== undefined ? (
+          <div className="whitespace-pre-wrap">
+            <Rich text={text} />
+          </div>
+        ) : (
+          children
+        )}
         {cite && (
           <span className="mt-2 flex items-center gap-1.5 text-[12.5px] text-leaf-text">
             <BookOpen aria-hidden className="size-3.5" />

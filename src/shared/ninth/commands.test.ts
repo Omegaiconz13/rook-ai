@@ -5,10 +5,12 @@ import { runCommand } from './commands'
 import type { CommandOutcome, CommandState } from './commands'
 import { emptyMemory } from './memory'
 import type { Learning, Observation } from './memory'
+import { testContext } from './testctx'
 
 const state = (over: Partial<CommandState> = {}): CommandState => ({
   memory: emptyMemory(),
   audit: [],
+  desk: testContext().desk,
   today: '2026-11-19',
   ...over,
 })
@@ -63,7 +65,37 @@ describe('commands', () => {
   })
 
   test('lists the commands it knows for an unknown one', () => {
-    expect(text(runCommand('/draft', state()))).toContain('/memory · /trace')
+    expect(text(runCommand('/chart', state()))).toContain('/memory · /trace · /review · /draft')
+  })
+})
+
+describe('/review', () => {
+  test('prints the four roles for the setup that fired', () => {
+    const reply = text(runCommand('/review', state()))
+    expect(reply).toContain('Review — TSLA')
+    expect(reply).toContain('Counter-case')
+    expect(reply).toContain('Read-only: four fixed roles')
+  })
+
+  test('takes a setup id as its argument, and refuses one that did not fire', () => {
+    expect(text(runCommand('/review TSLA-orb', state()))).toContain('nothing to review')
+    expect(text(runCommand('/review TSLA-reclaim', state()))).toContain('Review — TSLA')
+  })
+})
+
+describe('/draft', () => {
+  test('prints the script and the replay', () => {
+    const reply = text(runCommand('/draft TSLA reclaim', state()))
+    expect(reply).toContain('//@version=5')
+    expect(reply).toContain('target first')
+  })
+
+  test('shows the syntax rather than guessing with no argument', () => {
+    expect(text(runCommand('/draft', state()))).toContain('/draft <symbol> <rule>')
+  })
+
+  test('refuses a rule that did not fire', () => {
+    expect(text(runCommand('/draft orb TSLA', state()))).toContain('expired without an entry')
   })
 })
 

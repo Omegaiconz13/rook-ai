@@ -37,6 +37,14 @@ export function etNow(now: Date = new Date()): { date: string; time: string } {
   return { date: `${p.year}-${p.month}-${p.day}`, time: `${hour}:${p.minute}` }
 }
 
+const clock = new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false })
+
+/** The New York wall clock for an instant, e.g. `10:30`. */
+export function etClock(iso: string): string {
+  const at = new Date(iso)
+  return Number.isNaN(at.getTime()) ? '—' : clock.format(at)
+}
+
 export function minutesOf(time: string): number {
   const [h, m] = time.split(':').map(Number)
   return (Number.isFinite(h) ? h : 0) * 60 + (Number.isFinite(m) ? m : 0)

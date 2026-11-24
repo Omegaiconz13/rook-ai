@@ -192,7 +192,7 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
               ))}
             </div>
             <p className="text-[12.5px] text-faint">
-              Commands: /memory (list, add, forget) · /trace (last turn's routing and tools)
+              Commands: /review (four read-only roles) · /draft (Pine + replay) · /memory (list, add, forget) · /trace (last turn)
             </p>
           </div>
         ) : (
