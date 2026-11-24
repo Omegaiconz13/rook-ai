@@ -8,6 +8,8 @@ import type { Account, RiskLimits, SessionInfo, TradePlan } from '../shared/risk
 import { simulate } from '../shared/simulate'
 import { deskSetups } from '../shared/setups'
 import { etNow, sessionStateAt } from '../shared/time'
+import { toChatRequest } from '../shared/ninth/provider'
+import type { ModelCallInput } from '../shared/ninth/loop'
 import { validateContact, validateEmail, validateLogin, validateSignup } from '../shared/validate'
 
 /*
@@ -17,7 +19,22 @@ import { validateContact, validateEmail, validateLogin, validateSignup } from '.
   page. Nothing is stored server-side: limits, the account and the journal live in
   the browser.
 */
-type Env = { ASSETS: Fetcher }
+type Env = {
+  ASSETS: Fetcher
+  /** Set as a Worker secret by the operator; absent in the offline demo. */
+  MODEL_API_KEY?: string
+  /** Any OpenAI-compatible base URL, e.g. a local Ollama at http://127.0.0.1:11434/v1. */
+  MODEL_BASE_URL?: string
+  MODEL_NAME?: string
+}
+
+/** What the adapter expects when no operator says otherwise. */
+const MODEL_DEFAULT_BASE = 'https://api.openai.com/v1'
+const MODEL_DEFAULT_NAME = 'gpt-4.1-mini'
+/** Caps on what a browser may ask us to send upstream, since the route is public. */
+const MAX_SYSTEM_CHARS = 40_000
+const MAX_MESSAGES = 40
+const MAX_TOOLS = 40
 
 const app = new Hono<{ Bindings: Env }>()
 
@@ -35,6 +52,21 @@ const SOURCE = DATA.real ? 'yfinance' : 'fixture'
 
 const invalidJson = { ok: false, error: 'Send a JSON object.' }
 const fields = { ok: false, error: 'Check the highlighted fields.' }
+
+/**
+ * A model call costs money, so the route refuses another site's page. Requests
+ * with no Origin (curl, a test) are let through: this is not an auth boundary,
+ * only a stop on a stranger's tab spending the key.
+ */
+function fromSameOrigin(request: Request): boolean {
+  const origin = request.headers.get('origin')
+  if (!origin) return true
+  try {
+    return new URL(origin).host === new URL(request.url).host
+  } catch {
+    return false
+  }
+}
 
 app.get('/api/health', (c) => {
   const { time } = etNow()
@@ -141,6 +173,64 @@ app.post('/api/contact', async (c) => {
   const errors = validateContact(b)
   if (Object.keys(errors).length) return c.json({ ...fields, errors }, 422)
   return c.json({ ok: true })
+})
+
+/*
+  Ninth's model turns. The browser owns the loop, the tools and the gate; this
+  route owns the key and the socket, and does nothing else. With no key it says
+  so, and the panel keeps answering from the desk.
+*/
+
+app.get('/api/ninth/model', (c) =>
+  c.json({
+    ok: true,
+    configured: Boolean(c.env.MODEL_API_KEY),
+    model: c.env.MODEL_API_KEY ? (c.env.MODEL_NAME ?? MODEL_DEFAULT_NAME) : null,
+  }),
+)
+
+app.post('/api/ninth/turn', async (c) => {
+  if (!fromSameOrigin(c.req.raw)) return c.json({ ok: false, error: 'Cross-origin model calls are refused.' }, 403)
+
+  const key = c.env.MODEL_API_KEY
+  if (!key) {
+    return c.json({ ok: false, error: 'No model is configured on this deployment, so Ninth answers from the desk.' }, 503)
+  }
+
+  const b = await body<{ system: string; messages: ModelCallInput['messages']; tools: string[] }>(c)
+  if (!b) return c.json(invalidJson, 400)
+  if (typeof b.system !== 'string' || !Array.isArray(b.messages) || !Array.isArray(b.tools)) {
+    return c.json({ ok: false, error: 'A turn needs a system prompt, messages and tools.' }, 422)
+  }
+  if (b.system.length > MAX_SYSTEM_CHARS || b.messages.length > MAX_MESSAGES || b.tools.length > MAX_TOOLS) {
+    return c.json({ ok: false, error: 'That turn is larger than this route accepts.' }, 413)
+  }
+
+  const base = (c.env.MODEL_BASE_URL ?? MODEL_DEFAULT_BASE).replace(/\/+$/, '')
+  let upstream: Response
+  try {
+    upstream = await fetch(`${base}/chat/completions`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
+      body: JSON.stringify(
+        toChatRequest(
+          { system: b.system, messages: b.messages, tools: b.tools.filter((name) => typeof name === 'string') },
+          c.env.MODEL_NAME ?? MODEL_DEFAULT_NAME,
+        ),
+      ),
+    })
+  } catch {
+    return c.json({ ok: false, error: 'The model provider could not be reached.' }, 502)
+  }
+
+  if (!upstream.ok || !upstream.body) {
+    const detail = await upstream.text().catch(() => '')
+    return c.json({ ok: false, error: `The provider answered ${upstream.status}.`, detail: detail.slice(0, 300) }, 502)
+  }
+
+  return new Response(upstream.body, {
+    headers: { 'content-type': 'text/event-stream; charset=utf-8', 'cache-control': 'no-store' },
+  })
 })
 
 app.all('/api/*', (c) => c.json({ ok: false, error: 'Not found' }, 404))

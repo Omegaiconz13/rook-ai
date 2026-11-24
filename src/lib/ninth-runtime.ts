@@ -13,6 +13,7 @@ import type { DeskSnapshot, MemoryPorts, Tier } from '../shared/ninth/types'
 import { checkWatches, watchMessage } from '../shared/ninth/watch'
 import type { Quote, Watch } from '../shared/ninth/watch'
 import { barsFor } from '../shared/fixtures'
+import { modelStatus, remoteModel } from './ninth-client'
 import { readStore, writeStore } from './storage'
 
 /*
@@ -143,11 +144,27 @@ export function useNinth(desk: DeskSnapshot) {
   const [messages, setMessages] = useState<NinthMessage[]>([])
   const [running, setRunning] = useState(false)
   const [traceId, setTraceId] = useState<string | null>(null)
+  /** The model the Worker has a key for; null means the offline client is in use. */
+  const [model, setModel] = useState<string | null>(null)
+  const modelRef = useRef<string | null>(null)
+  modelRef.current = model
   const deskRef = useRef(desk)
   deskRef.current = desk
   const asked = useRef<string[]>([])
 
   const clear = useCallback(() => setMessages([]), [])
+
+  // One probe, once: which client the turns use. No key is the normal answer and
+  // keeps the deterministic client, so the offline demo needs no configuration.
+  useEffect(() => {
+    let alive = true
+    void modelStatus().then((status) => {
+      if (alive) setModel(status.configured ? status.model ?? 'connected' : null)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
 
   /*
     Watches are checked once, when the desk loads. Each one that reached its line
@@ -230,7 +247,7 @@ export function useNinth(desk: DeskSnapshot) {
           memory: readMemory(),
           ports: memoryPorts(snapshot.today),
         },
-        model: deterministicModel(snapshot),
+        model: modelRef.current ? remoteModel() : deterministicModel(snapshot),
         asked: prior,
         emit: (event) => {
           if (event.t === 'text') {
@@ -252,16 +269,17 @@ export function useNinth(desk: DeskSnapshot) {
         review: result.review,
       }))
       saveAudit(result.audit)
-    } catch {
+    } catch (error) {
+      const why = error instanceof Error && error.message ? ` ${error.message}` : ''
       patch((message) => ({
         ...message,
         error: true,
-        text: 'That turn could not finish. Nothing was written, and the desk is unchanged.',
+        text: `That turn could not finish.${why} Nothing was written, and the desk is unchanged.`,
       }))
     } finally {
       setRunning(false)
     }
   }, [append])
 
-  return { messages, ask, append, clear, running, traceId }
+  return { messages, ask, append, clear, running, traceId, model }
 }

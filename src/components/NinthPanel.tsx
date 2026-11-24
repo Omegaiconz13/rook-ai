@@ -282,7 +282,8 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
           </Button>
         </div>
         <p className="mt-1.5 truncate text-[11.5px] text-faint">
-          Snapshot · {levels.length} levels · {journal.length} journal rows · no model connected
+          Snapshot · {levels.length} levels · {journal.length} journal rows ·{' '}
+          {ninth.model ? `model ${ninth.model}` : 'no model connected'}
         </p>
       </form>
     </div>
