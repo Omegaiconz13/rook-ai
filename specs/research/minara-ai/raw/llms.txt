@@ -1,0 +1,170 @@
+# Minara AI
+
+> Agents can also search and read this documentation through its [MCP server](https://minara.ai/docs/~gitbook/mcp).
+
+## Harness
+
+- [Page](https://minara.ai/docs/agent/page.md)
+
+## Docs
+
+- [About Minara](https://minara.ai/docs/readme.md): Minara is an AI trading platform for live market research, trading signals, strategy backtesting, and execution across crypto, stocks, and commodities.
+- [Create your account](https://minara.ai/docs/get-started/activate-your-account.md): Sign up for Minara with Google or email.
+- [Deposit](https://minara.ai/docs/get-started/deposit.md)
+- [Subscribe](https://minara.ai/docs/get-started/subscribe.md)
+- [How Minara works](https://minara.ai/docs/get-started/how-minara-works.md): What happens between your request and Minara's answer, and where you stay in control of your money.
+- [AI trading copilot](https://minara.ai/docs/trade/trading-copilot.md): Learn how Minara's AI trading copilot analyzes live market data, creates long or short trade plans, and lets you review risk before execution.
+- [Research an asset before you trade](https://minara.ai/docs/trade/trading-copilot/asset-research.md)
+- [Scan the markets](https://minara.ai/docs/trade/scan-markets.md)
+- [Institution review](https://minara.ai/docs/trade/institution-review.md)
+- [Autopilot](https://minara.ai/docs/trade/trading-autopilot.md)
+- [Strategy Studio](https://minara.ai/docs/trade/strategy-studio.md)
+- [Create Cross-sectional Strategies](https://minara.ai/docs/trade/strategy-studio/create-cross-sectional-strategies.md)
+- [Create Time-series Strategies](https://minara.ai/docs/trade/strategy-studio/create-time-series-strategies.md)
+- [Strategy Marketplace](https://minara.ai/docs/trade/strategy-market.md)
+- [Discover strategies](https://minara.ai/docs/trade/strategy-market/discover-strategies.md)
+- [Compare Top Strategies](https://minara.ai/docs/trade/strategy-market/compare-top-strategies.md)
+- [Evaluate a strategy](https://minara.ai/docs/trade/strategy-market/evaluate-a-strategy.md)
+- [Creators and profiles](https://minara.ai/docs/trade/strategy-market/creators-and-profiles.md)
+- [Subscribe to a strategy](https://minara.ai/docs/trade/strategy-market/run-a-strategy.md)
+- [Publish and manage](https://minara.ai/docs/trade/strategy-market/publish-and-manage.md)
+- [Prediction Market](https://minara.ai/docs/trade/prediction-market-copilot.md)
+- [Prediction Markets](https://minara.ai/docs/trade/prediction-markets.md)
+- [Assets](https://minara.ai/docs/trade/trade-assets.md)
+- [Portfolio coverage](https://minara.ai/docs/trade/portfolio-coverage.md)
+- [Skills](https://minara.ai/docs/trade/minara-skills.md)
+- [Benchmark](https://minara.ai/docs/trade/benchmark.md)
+- [API](https://minara.ai/docs/trade/agent-api.md)
+- [Authentication](https://minara.ai/docs/trade/agent-api/authentication.md)
+- [API Key](https://minara.ai/docs/trade/agent-api/api-key.md)
+- [x402](https://minara.ai/docs/trade/agent-api/x402.md)
+- [API Reference (API Key)](https://minara.ai/docs/trade/agent-api/api-reference-api-key.md)
+- [API Reference (x402)](https://minara.ai/docs/trade/agent-api/api-reference-x402.md)
+- [Liquidity](https://minara.ai/docs/trade/liquidity.md)
+- [Hyperliquid](https://minara.ai/docs/trade/liquidity/hyperliquid.md)
+- [Lighter](https://minara.ai/docs/trade/liquidity/lighter.md)
+- [Trading fees](https://minara.ai/docs/trade/trading-fees.md)
+- [Glossary](https://minara.ai/docs/trade/glossary.md)
+- [Overview](https://minara.ai/docs/automation/overview.md): Let Minara run routine work for you on a schedule, when the market moves, or on demand. Available in the Minara desktop app.
+- [Scheduled briefs and reports](https://minara.ai/docs/automation/scheduled-briefs-and-reports.md): Get market briefs, portfolio reports, and reminders delivered on a schedule you choose.
+- [Price alerts](https://minara.ai/docs/automation/price-alerts.md): Get notified in real time when a price crosses or stays beyond your level.
+- [Wallet and trader monitoring](https://minara.ai/docs/automation/wallet-and-trader-monitoring.md): Follow on-chain wallets and Hyperliquid or Lighter traders, and get notified when they trade.
+- [Research monitors](https://minara.ai/docs/automation/research-monitors.md): Let Minara keep watch on catalysts, sectors, filings, and your investment theses, and tell you what changed.
+- [Automated trading plans](https://minara.ai/docs/automation/automated-trading-plans.md): Turn a simple trading plan into an automation: recurring buys, laddered orders, or mirroring a wallet's trades within your limits.
+- [Legacy: Workflow](https://minara.ai/docs/automation/legacy-workflow.md): Archived documentation for Workflow in the Minara web app.
+- [Workflow overview (Legacy)](https://minara.ai/docs/automation/legacy-workflow/agentic-workflow.md)
+- [Price alert bot (Legacy)](https://minara.ai/docs/automation/legacy-workflow/how-to-create-a-price-alert-bot.md): Build a reliable alert that watches prices and pings you the moment conditions hit.
+- [Automated trade execution (Legacy)](https://minara.ai/docs/automation/legacy-workflow/how-to-set-up-automated-trade-execution.md): By setting order triggers, Minara place trades automatically when your target triggers are hit.
+- [Scheduled analysis (Legacy)](https://minara.ai/docs/automation/legacy-workflow/how-to-run-analysis-on-a-schedule.md): Minara makes you stay informed without any manual check.
+- [Copy trading bot (Legacy)](https://minara.ai/docs/automation/legacy-workflow/how-to-create-a-copy-trading-bot.md): Automatically mirror trusted wallet buy and sell strategies with Minara workflows, no manual effort needed.
+- [Order types](https://minara.ai/docs/reference/order-types.md)
+- [Margin & leverage](https://minara.ai/docs/reference/margin-and-leverage.md)
+- [Liquidations](https://minara.ai/docs/reference/liquidations.md)
+- [Credits](https://minara.ai/docs/reference/credits.md)
+- [Personalization](https://minara.ai/docs/reference/personalization.md)
+- [Multimodal input](https://minara.ai/docs/reference/multimodal-input.md)
+- [Workspace](https://minara.ai/docs/reference/workspace.md): Each Minara task has its own workspace for files, code, and results. On the web, it runs in a private cloud sandbox of your own. Chats can sync between web and desktop.
+- [Minara Bug Bounty Program](https://minara.ai/docs/technology/minara-bug-bounty-program.md)
+- [Security audit (SlowMist)](https://minara.ai/docs/technology/security-audit.md): Minara AI was audited by SlowMist from July 30 to August 19, 2025 (audit no. 0X002508190001). Result: Passed. 23 findings, all 14 non-suggestion issues fixed, including 1 critical and 2 high.
+- [DMind](https://minara.ai/docs/technology/dmind.md)
+- [Sovereign architecture](https://minara.ai/docs/technology/dmind/sovereign-architecture.md)
+- [Model family](https://minara.ai/docs/technology/dmind/model-family.md)
+- [DMind Benchmark](https://minara.ai/docs/technology/dmind/benchmark.md)
+- [Training methods](https://minara.ai/docs/technology/dmind/training-methods.md)
+- [Safety and approvals](https://minara.ai/docs/technology/safety-and-approvals.md)
+- [Wallet security](https://minara.ai/docs/technology/wallet-security.md)
+- [Tool Stack](https://minara.ai/docs/technology/tools-integration.md)
+- [TEE-based Data Security](https://minara.ai/docs/technology/data-security.md)
+
+## Academy
+
+- [Getting started](https://minara.ai/docs/academy/readme.md)
+- [What Strategy Studio is](https://minara.ai/docs/academy/readme/what-strategy-studio-is.md)
+- [The interface](https://minara.ai/docs/academy/readme/the-interface.md)
+- [Glossary](https://minara.ai/docs/academy/readme/glossary.md)
+- [Strategy Subscribers](https://minara.ai/docs/academy/strategy-followers.md)
+- [Explore the market](https://minara.ai/docs/academy/strategy-followers/explore-the-market.md)
+- [Run your first strategy](https://minara.ai/docs/academy/strategy-followers/run-your-first-strategy.md)
+- [Autopilot explained](https://minara.ai/docs/academy/strategy-followers/autopilot-explained.md)
+- [Strategy creators](https://minara.ai/docs/academy/strategy-creators.md)
+- [Time-series strategies](https://minara.ai/docs/academy/strategy-creators/time-series.md)
+- [Your first time-series strategy](https://minara.ai/docs/academy/strategy-creators/time-series/your-first-strategy.md)
+- [Run a backtest](https://minara.ai/docs/academy/strategy-creators/time-series/run-a-backtest.md)
+- [Reading the backtest metrics](https://minara.ai/docs/academy/strategy-creators/time-series/reading-backtest-metrics.md)
+- [Optimize parameters](https://minara.ai/docs/academy/strategy-creators/time-series/optimize-parameters.md)
+- [Deploy and share](https://minara.ai/docs/academy/strategy-creators/time-series/deploy-and-share.md)
+- [Cross-sectional strategies](https://minara.ai/docs/academy/strategy-creators/cross-sectional.md)
+- [Your first cross-sectional strategy](https://minara.ai/docs/academy/strategy-creators/cross-sectional/your-first-strategy.md)
+- [Run a backtest](https://minara.ai/docs/academy/strategy-creators/cross-sectional/run-a-backtest.md)
+- [Reading the metrics](https://minara.ai/docs/academy/strategy-creators/cross-sectional/reading-metrics.md)
+- [Optimize the factor mix](https://minara.ai/docs/academy/strategy-creators/cross-sectional/optimize-factors.md)
+- [Deploy and share](https://minara.ai/docs/academy/strategy-creators/cross-sectional/deploy-and-share.md)
+- [Manage your strategies](https://minara.ai/docs/academy/manage-your-strategies.md)
+- [Your strategy library](https://minara.ai/docs/academy/manage-your-strategies/your-strategy-library.md)
+- [Visibility, subscribers, and earnings](https://minara.ai/docs/academy/manage-your-strategies/visibility-subscribers-and-earnings.md)
+- [Edit your creator profile](https://minara.ai/docs/academy/manage-your-strategies/edit-your-creator-profile.md)
+- [FAQ](https://minara.ai/docs/academy/faq.md)
+
+## Support
+
+- [Support guide](https://minara.ai/docs/support/readme.md): How to get help with Minara: support channels, response times, and security.
+- [Account & access issues](https://minara.ai/docs/support/faq/account-and-access.md)
+- [Login and account access](https://minara.ai/docs/support/faq/account-and-access/login-and-access.md)
+- [Deposit & withdrawal issues](https://minara.ai/docs/support/faq/deposit-and-withdrawal.md)
+- [Card deposit issues](https://minara.ai/docs/support/faq/deposit-and-withdrawal/card-deposits.md)
+- [On-chain deposit issues](https://minara.ai/docs/support/faq/deposit-and-withdrawal/on-chain-deposits.md)
+- [Withdrawal issues](https://minara.ai/docs/support/faq/deposit-and-withdrawal/withdrawals.md)
+- [Trading issues](https://minara.ai/docs/support/faq/trading.md)
+- [Orders and execution](https://minara.ai/docs/support/faq/trading/orders-and-execution.md)
+- [Strategy Marketplace](https://minara.ai/docs/support/faq/trading/strategy-marketplace.md)
+- [Backtesting](https://minara.ai/docs/support/faq/trading/backtesting.md)
+- [Autopilot and Sharpe Guard](https://minara.ai/docs/support/faq/trading/autopilot-and-sharpe-guard.md)
+- [Assets and chains](https://minara.ai/docs/support/faq/trading/assets-and-chains.md)
+- [Unknown errors](https://minara.ai/docs/support/faq/trading/unknown-errors.md)
+- [Prediction markets](https://minara.ai/docs/support/faq/trading/prediction-markets.md)
+- [Research & analysis](https://minara.ai/docs/support/faq/research-and-analysis.md)
+- [Data accuracy](https://minara.ai/docs/support/faq/research-and-analysis/data-accuracy.md)
+- [Credits and cost](https://minara.ai/docs/support/faq/research-and-analysis/credits-and-cost.md)
+- [Subscription & credits](https://minara.ai/docs/support/faq/subscription-and-credits.md)
+- [How is the plan priced?](https://minara.ai/docs/support/faq/subscription-and-credits/pricing.md)
+- [How credits work](https://minara.ai/docs/support/faq/subscription-and-credits/how-credits-work.md): We use credits to measure your usage on Minara. Whenever you perform actions that involve AI processing or specific workflow execution, credits are deducted based on token consumption.
+- [What are Sparks?](https://minara.ai/docs/support/faq/subscription-and-credits/sparks.md)
+- [Referral rewards](https://minara.ai/docs/support/faq/subscription-and-credits/referral-rewards.md): Invite your friends to join Minara and earn rewards together.
+- [Manage subscription](https://minara.ai/docs/support/faq/subscription-and-credits/manage-subscription.md): Managing your subscription is simple. Click "Manage" in the top right corner to access the subscription management page, where you can view your current plan details, usage, and billing cycle
+- [Wallet & security issues](https://minara.ai/docs/support/faq/wallet-and-security.md)
+- [Wallet and balance](https://minara.ai/docs/support/faq/wallet-and-security/wallet-basics.md)
+- [Security incidents](https://minara.ai/docs/support/faq/wallet-and-security/security-incidents.md)
+- [Export your private key](https://minara.ai/docs/support/faq/wallet-and-security/export-private-key.md)
+- [Reset your 2FA](https://minara.ai/docs/support/faq/wallet-and-security/reset-2fa.md)
+- [Workflow issues](https://minara.ai/docs/support/faq/workflow-issues.md)
+- [Workflow troubleshooting](https://minara.ai/docs/support/faq/workflow-issues/common-issues.md)
+- [Strategy Studio](https://minara.ai/docs/support/faq/strategy-studio.md)
+- [Backtesting](https://minara.ai/docs/support/faq/strategy-studio/backtesting.md)
+- [Strategy code](https://minara.ai/docs/support/faq/strategy-studio/strategy-code.md)
+- [Deploying and live trading](https://minara.ai/docs/support/faq/strategy-studio/deploying-and-live-trading.md)
+- [Time-series strategies](https://minara.ai/docs/support/faq/strategy-studio/time-series.md)
+- [Cross-sectional strategies](https://minara.ai/docs/support/faq/strategy-studio/cross-sectional.md)
+- [Technical issues](https://minara.ai/docs/support/faq/technical-issues.md)
+- [App issues](https://minara.ai/docs/support/faq/technical-issues/app-issues.md)
+- [API issues](https://minara.ai/docs/support/faq/technical-issues/api-issues.md)
+- [How to get support](https://minara.ai/docs/support/faq/technical-issues/get-support.md)
+
+
+---
+
+# Agent Instructions
+This documentation is published with GitBook. GitBook is the documentation platform designed so that both humans and AI agents can read, navigate, and reason over technical content effectively. Learn more at gitbook.com.
+
+## Querying This Documentation
+This site has an agentic ask interface you may use to query the documentation dynamically by asking a question.
+
+Perform an HTTP GET request on the following URL with the `ask` and `goal` query parameters:
+
+```
+GET https://minara.ai/docs/index.md?ask=<question>&goal=<user_goal>
+```
+
+`ask` is the immediate question: it should be specific, self-contained, and written in natural language.
+`goal` is what the user is ultimately trying to achieve, the reason they need the answer. Sharing it helps GitBook give you a better, more relevant answer. A goal is most helpful when it describes the outcome the user wants rather than restating the question. For example, with `ask=how do I create an API token`, a goal like `automate deployments from our CI pipeline` lets GitBook tailor the answer to that use case.
+
+The response will contain a direct answer to the question and relevant excerpts and sources from the documentation.
