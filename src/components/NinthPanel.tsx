@@ -1,21 +1,21 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Crosshair, Maximize2, Minimize2, RotateCcw, Send, X } from 'lucide-react'
 import type { Vela } from '@luxalgo/vela'
 
 import { bareTicker, chartHistory, DEFAULT_TIMEFRAME, TIMEFRAME_LABEL, timeframeFor } from '../shared/chartfeed'
 import { barsFor, dailyFor } from '../shared/fixtures'
 import { SESSION_DATE } from '../shared/market'
-import { analyzeNinth, answerNinth, NINTH_NAME } from '../shared/ninth'
-import type { NinthContext } from '../shared/ninth'
+import { analyzeNinth, NINTH_NAME } from '../shared/ninth'
+import { ninthContextFrom } from '../shared/ninth/answer'
+import type { DeskSnapshot } from '../shared/ninth/types'
 import { checkPlan } from '../shared/risk'
 import type { GateVerdict } from '../shared/risk'
 import { planFromSetup, setupsFor } from '../shared/setups'
-import { accountFor, useAccountState, useConfirmed, useDeskSession, useJournal, useLimits } from '../lib/desk'
+import { accountFor, useAccountState, useConfirmed, useDeskSession, useJournal, useLimits, useTickets } from '../lib/desk'
+import { useNinth } from '../lib/ninth-runtime'
 import { drawSetupLevels, drawSetupPosition, setupLevelsFor } from '../lib/vela'
 import { Button } from './Button'
 import { ChatBubble } from './ChatBubble'
-
-type Message = { id: number; from: 'you' | 'ninth'; text: string; refs?: string[] }
 
 const SUGGESTIONS = ['Where are the levels?', 'Any setups on the scan?', 'Why was it blocked?', 'What did I journal?']
 
@@ -32,20 +32,19 @@ type Props = {
 }
 
 /**
- * Ninth, docked beside the chart. This is its desk-mode mouth: every answer is
- * assembled from the snapshot, the written rules, the gate and the journal, so
- * it works with no model, no key and no network — and says when it has nothing
- * to read instead of guessing.
+ * Ninth, docked beside the chart. Every question runs a full harness turn: the
+ * router picks the playbooks, the loop asks the deterministic client, and the
+ * answer, the refs and the tool calls behind it are all the desk's own. With no
+ * provider key configured this is the whole product — and it says so.
  */
 export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
-  const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
-  const nextId = useRef(1)
   const [journal] = useJournal()
   const [limits] = useLimits()
   const [stored] = useAccountState()
   const [confirmed] = useConfirmed()
-  const { session } = useDeskSession()
+  const [tickets] = useTickets()
+  const { session, simulated } = useDeskSession()
   const [, rerender] = useState(0)
 
   const chart = getChart()
@@ -84,32 +83,34 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
     })
   }, [setups, limits, stored, session, confirmed])
 
-  const context = useMemo<NinthContext>(
+  const desk = useMemo<DeskSnapshot>(
     () => ({
       symbol,
-      timeframe: timeframeLabel,
+      timeframe,
       bars: symbol ? chartHistory(symbol, timeframe) : [],
       levels,
       setups,
       journal,
+      tickets,
+      confirmed,
       gate,
+      limits,
+      account: accountFor(limits, stored),
+      session,
+      simulated,
       today: SESSION_DATE,
     }),
-    [symbol, timeframe, timeframeLabel, levels, setups, journal, gate],
+    [symbol, timeframe, levels, setups, journal, tickets, confirmed, gate, limits, stored, session, simulated],
   )
 
+  const ninth = useNinth(desk)
   const maximized = header.maximized
-  const canClear = messages.length > 0
+  const canClear = ninth.messages.length > 0
 
   const send = (question: string) => {
     const q = question.trim()
-    if (!q) return
-    const answer = answerNinth(q, context)
-    setMessages((prev) => [
-      ...prev,
-      { id: nextId.current++, from: 'you', text: q },
-      { id: nextId.current++, from: 'ninth', text: answer.text, refs: answer.refs },
-    ])
+    if (!q || ninth.running) return
+    void ninth.ask(q)
     setDraft('')
   }
 
@@ -120,7 +121,7 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
    * is stored twice.
    */
   const analyze = () => {
-    const answer = analyzeNinth(context)
+    const answer = analyzeNinth(ninthContextFrom(desk))
     const chart = getChart()
     const range = chart?.getVisibleRange() ?? null
     let drawn = ' No chart is bound to this panel, so nothing was drawn.'
@@ -134,11 +135,7 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
             ? ' No rule setup matched this symbol, so nothing was drawn.'
             : ' This chart cannot draw, so nothing was placed on it.'
     }
-    setMessages((prev) => [
-      ...prev,
-      { id: nextId.current++, from: 'you', text: 'Analyze' },
-      { id: nextId.current++, from: 'ninth', text: `${answer.text}${drawn}`, refs: answer.refs },
-    ])
+    ninth.append('Analyze', `${answer.text}${drawn}`, answer.refs)
   }
 
   return (
@@ -151,7 +148,7 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
         <span className="ml-auto flex items-center gap-1">
           <button
             type="button"
-            onClick={() => setMessages([])}
+            onClick={ninth.clear}
             disabled={!canClear}
             aria-label="Clear conversation"
             className="tap-target grid size-8 place-items-center rounded-full text-faint transition hover:bg-white/8 hover:text-fg disabled:opacity-40"
@@ -181,7 +178,7 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3" role="log" aria-live="polite" aria-label="Conversation with Ninth">
-        {messages.length === 0 ? (
+        {ninth.messages.length === 0 ? (
           <div className="grid gap-3">
             <p className="text-[16px] leading-relaxed text-muted">
               I read the chart in front of you: its written levels, the setups, the gate's verdict on the setup and the journal.
@@ -197,14 +194,43 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
           </div>
         ) : (
           <div className="grid gap-4">
-            {messages.map((message) => (
-              <ChatBubble
-                key={message.id}
-                from={message.from === 'you' ? 'you' : 'desk'}
-                text={message.text}
-                cite={message.refs?.length ? message.refs.join(' · ') : undefined}
-              />
+            {ninth.messages.map((message) => (
+              <div key={message.id} className="grid gap-1.5">
+                <ChatBubble
+                  from={message.from === 'you' ? 'you' : 'desk'}
+                  text={message.text}
+                  cite={message.refs.length ? message.refs.join(' · ') : undefined}
+                  error={message.error}
+                />
+                {message.skills && message.skills.length > 0 && (
+                  <details className="ml-9">
+                    <summary className="tap-target inline-flex cursor-pointer select-none items-center text-[11.5px] text-faint">
+                      why this
+                    </summary>
+                    <p className="mt-1 text-[11.5px] text-faint">
+                      routed: {message.skills.map((skill) => `${skill.id} ${skill.score.toFixed(0)}`).join(' · ')}
+                    </p>
+                    <ul className="mt-1 grid gap-0.5 text-[11.5px] text-faint">
+                      {message.tools && message.tools.length > 0 ? (
+                        message.tools.map((tool) => (
+                          <li key={tool.id}>
+                            {tool.name} · tier {tool.tier} · {tool.status}
+                            {tool.ms === undefined ? '' : ` · ${tool.ms}ms`}
+                          </li>
+                        ))
+                      ) : (
+                        <li>no tool calls: answered from the snapshot</li>
+                      )}
+                    </ul>
+                  </details>
+                )}
+              </div>
             ))}
+            {ninth.running && (
+              <p role="status" className="ml-9 text-[12.5px] text-faint">
+                Reading the desk…
+              </p>
+            )}
           </div>
         )}
       </div>
@@ -242,12 +268,12 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
             placeholder="Ask about the levels, the gate, the journal…"
             className="field min-h-11 flex-1 resize-none py-2 text-[16px] leading-snug"
           />
-          <Button type="submit" variant="paper" icon={<Send className="size-4" />} disabled={!draft.trim()} aria-label="Send">
+          <Button type="submit" variant="paper" icon={<Send className="size-4" />} disabled={!draft.trim() || ninth.running} aria-label="Send">
             Send
           </Button>
         </div>
         <p className="mt-1.5 truncate text-[11.5px] text-faint">
-          Snapshot · {context.levels.length} levels · {context.journal.length} journal rows · no model connected
+          Snapshot · {levels.length} levels · {journal.length} journal rows · no model connected
         </p>
       </form>
     </div>
