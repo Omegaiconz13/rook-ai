@@ -3,7 +3,8 @@ import type { ComponentType, ReactNode } from 'react'
 
 import { ToastProvider } from './components/Toast'
 import { BRAND } from './content'
-import { match, scrollToHash, useLocation } from './lib/router'
+import { scrollToHash, useLocation } from './lib/router'
+import { routeFor, titleFor } from './lib/routes'
 import { Home } from './pages/Home'
 import { NotFound } from './pages/NotFound'
 import { Footer } from './sections/Footer'
@@ -26,24 +27,24 @@ const RiskGatePage = page(() => import('./pages/app/RiskGate'), 'RiskGatePage')
 const NinthPage = page(() => import('./pages/app/Ninth'), 'NinthPage')
 
 /*
-  The route table. `layout` picks the frame: the marketing site (nav and
-  footer), the bare auth screens, or the desk shell.
+  What each path renders. The addresses themselves live in `lib/routes.ts`, so the
+  desk rail, the document title and the tests all read one table instead of three.
 */
-type Route = { path: string; title: string; layout: 'site' | 'bare' | 'app'; render: () => ReactNode }
-
-const routes: Route[] = [
-  { path: '/', title: '', layout: 'site', render: () => <Home /> },
-  { path: '/pricing', title: 'Pricing', layout: 'site', render: () => <Pricing /> },
-  { path: '/about', title: 'About', layout: 'site', render: () => <About /> },
-  { path: '/styleguide', title: 'Style guide', layout: 'site', render: () => <Styleguide /> },
-  { path: '/login', title: 'Log in', layout: 'bare', render: () => <Login /> },
-  { path: '/signup', title: 'Sign up', layout: 'bare', render: () => <Signup /> },
-  { path: '/app', title: "Today's desk", layout: 'app', render: () => <DeskPage /> },
-  { path: '/app/charts', title: 'Charts', layout: 'app', render: () => <ChartsPage /> },
-  { path: '/app/risk', title: 'Risk gate', layout: 'app', render: () => <RiskGatePage /> },
-  { path: '/app/journal', title: 'Journal', layout: 'app', render: () => <JournalPage /> },
-  { path: '/app/chat', title: 'Ninth', layout: 'app', render: () => <NinthPage /> },
-]
+const PAGES: Record<string, () => ReactNode> = {
+  '/': () => <Home />,
+  '/pricing': () => <Pricing />,
+  '/about': () => <About />,
+  '/styleguide': () => <Styleguide />,
+  '/login': () => <Login />,
+  '/signup': () => <Signup />,
+  '/app': () => <DeskPage />,
+  '/app/charts': () => <ChartsPage />,
+  '/app/risk': () => <RiskGatePage />,
+  '/app/journal': () => <JournalPage />,
+  '/app/chat': () => <NinthPage />,
+  '/app/setup/:symbol': () => <SetupPage />,
+  '/app/session/:symbol/:date': () => <SessionPage />,
+}
 
 /* A lazy route's fallback: announced, and visibly a page still arriving. */
 const Blank = () => (
@@ -55,18 +56,13 @@ const Blank = () => (
 
 export function App() {
   const { path, hash } = useLocation()
-  const setupMatch = match('/app/setup/:symbol', path)
-  const sessionMatch = match('/app/session/:symbol/:date', path)
-  const hit =
-    routes.find((r) => r.path === path) ??
-    (setupMatch
-      ? { path, title: `${setupMatch.symbol.toUpperCase()} setup`, layout: 'app' as const, render: () => <SetupPage /> }
-      : sessionMatch
-        ? { path, title: `${sessionMatch.symbol.toUpperCase()} session`, layout: 'app' as const, render: () => <SessionPage /> }
-        : undefined)
+  const hit = routeFor(path)
+  const page = hit ? PAGES[hit.route.path] : undefined
+  const view = page ? page() : <NotFound />
+  const layout = hit?.route.layout
   const main = useRef<HTMLElement>(null)
   const first = useRef(true)
-  const title = hit ? hit.title : path.startsWith('/app') ? 'Not found' : 'Page not found'
+  const title = titleFor(path)
 
   useEffect(() => {
     document.title = title ? `${title} | ${BRAND.name}` : `${BRAND.name}: ${BRAND.tagline}`
@@ -93,22 +89,22 @@ export function App() {
   }, [path, hash])
 
   let body: ReactNode
-  if (hit?.layout === 'app' || path.startsWith('/app')) {
+  if (layout === 'app' || path.startsWith('/app')) {
     body = (
       <Suspense fallback={<Blank />}>
         <AppShell>
-          <Suspense fallback={<Blank />}>{hit ? hit.render() : <NotFound />}</Suspense>
+          <Suspense fallback={<Blank />}>{view}</Suspense>
         </AppShell>
       </Suspense>
     )
-  } else if (hit?.layout === 'bare') {
-    body = <Suspense fallback={<Blank />}>{hit.render()}</Suspense>
+  } else if (layout === 'bare') {
+    body = <Suspense fallback={<Blank />}>{view}</Suspense>
   } else {
     body = (
       <>
         <Nav overlay={path === '/'} />
         <main id="main" ref={main} tabIndex={-1} className="outline-none">
-          <Suspense fallback={<Blank />}>{hit ? hit.render() : <NotFound />}</Suspense>
+          <Suspense fallback={<Blank />}>{view}</Suspense>
         </main>
         <Footer />
       </>

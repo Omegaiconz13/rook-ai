@@ -11,16 +11,20 @@ import { NavDrawer, NavRail } from '../../components/ui/sidebar-nav'
 import { cx } from '../../lib/cx'
 import { accountFor, engageKillSwitch, resetDesk, useAccountState, useDeskSession, useLimits, useUser } from '../../lib/desk'
 import { navigate } from '../../lib/router'
+import { DESK_NAV } from '../../lib/routes'
 import { money } from '../../shared/sizing'
 import { sessionLabel } from '../../shared/time'
 
-export const APP_NAV = [
-  { href: '/app', label: 'Desk', icon: LayoutDashboard },
-  { href: '/app/charts', label: 'Charts', icon: ChartCandlestick },
-  { href: '/app/risk', label: 'Gate', icon: ShieldCheck },
-  { href: '/app/journal', label: 'Journal', icon: BookOpen },
-  { href: '/app/chat', label: 'Ninth', icon: MessageSquareText },
-]
+const ICONS = {
+  '/app': LayoutDashboard,
+  '/app/charts': ChartCandlestick,
+  '/app/risk': ShieldCheck,
+  '/app/journal': BookOpen,
+  '/app/chat': MessageSquareText,
+}
+
+/** Hrefs and labels come from the route table; only the icon is local. */
+export const APP_NAV = DESK_NAV.map((item) => ({ ...item, icon: ICONS[item.href as keyof typeof ICONS] }))
 
 /** Frame for the desk: an icon rail that opens on hover, or a drawer on phones. */
 export function AppShell({ children }: { children: ReactNode }) {
