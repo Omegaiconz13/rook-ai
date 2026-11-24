@@ -9,8 +9,8 @@ export function Hero() {
   return (
     <section className="relative isolate overflow-hidden" aria-labelledby="hero-title">
       {/* Ambient light: a green bloom between the copy and the figure. */}
-      <div aria-hidden className="absolute inset-0 -z-20 bg-[radial-gradient(120%_90%_at_70%_40%,#0d2614_0%,#07120a_45%,var(--color-bg)_80%)]" />
-      <div aria-hidden className="absolute left-[44%] top-[34%] -z-10 size-[min(52vw,760px)] -translate-x-1/2 -translate-y-1/2 animate-glow rounded-full bg-[radial-gradient(circle,rgb(47_194_76/0.55)_0%,rgb(47_194_76/0.18)_38%,transparent_68%)] blur-2xl" />
+      <div aria-hidden className="absolute inset-0 -z-20 bg-[radial-gradient(120%_90%_at_70%_40%,var(--color-panel-2)_0%,var(--color-night)_45%,var(--color-bg)_80%)]" />
+      <div aria-hidden className="absolute left-[44%] top-[34%] -z-10 size-[min(52vw,760px)] -translate-x-1/2 -translate-y-1/2 animate-glow rounded-full bg-[radial-gradient(circle,var(--color-glow-soft)_0%,var(--color-glow-faint)_38%,transparent_68%)] blur-2xl" />
 
       <div className="pointer-events-none absolute inset-0 -z-10 hidden lg:block">
         <Photo

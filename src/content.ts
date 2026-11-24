@@ -34,7 +34,7 @@ export const HERO = {
   titleBottom: 'Trading Desk',
   lede: 'A supervised desk for one trade at a time: the seats read the session, argue both sides and write a memo. Plain code holds the risk line, and it can say no.',
   cta: 'Open the desk',
-  caption: `Nine seats and fifteen rules on every plan. No signup, no keys: the demo is one labelled ${DATA.real ? 'session of delayed market data' : 'sample session'}.`,
+  caption: `Eight seats and fifteen rules on every plan. No signup, no keys: the demo is one labelled ${DATA.real ? 'session of delayed market data' : 'sample session'}.`,
 }
 
 export const FEATURES = {
@@ -82,7 +82,7 @@ export const STEPS = {
 }
 
 export const STATS = [
-  { value: 9, suffix: '', label: 'seats on one trade', decimals: 0 },
+  { value: 8, suffix: '', label: 'seats on one trade', decimals: 0 },
   { value: 15, suffix: '', label: 'rules checked before any order', decimals: 0 },
   { value: 6, suffix: '', label: 'screens that need no API key', decimals: 0 },
   { value: 100, suffix: '%', label: 'paper-only execution', decimals: 0 },
@@ -183,7 +183,7 @@ export const ABOUT = {
   ],
   numbers: [
     { value: '2026', label: 'founded' },
-    { value: '9', label: 'seats on one trade' },
+    { value: '8', label: 'seats on one trade' },
     { value: '15', label: 'rules in the gate' },
   ],
   contactTitle: 'Say hello',

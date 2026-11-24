@@ -110,6 +110,34 @@ describe('gap-retest setups', () => {
   })
 })
 
+describe('a partial session', () => {
+  // A session that ends before 11:30: the flag scan used to walk to bar 24 and read
+  // past the array, which threw and took the whole desk down.
+  const bar = (i: number, close: number, high: number, low: number, open = close): Bar => ({
+    start: new Date(Date.UTC(2026, 10, 19, 14, 30) + i * 5 * 60_000).toISOString(),
+    open,
+    high,
+    low,
+    close,
+    volume: 1_000,
+  })
+  const short: Bar[] = []
+  for (let i = 0; i < 6; i++) {
+    const close = 10_000 + i * 80
+    short.push(bar(i, close, close + 100, close - 100, i === 0 ? 10_000 : short[i - 1].close))
+  }
+  // A flag with falling highs, above the run-up's fourth close.
+  short.push(bar(6, 10_500, 10_800, 10_400))
+  short.push(bar(7, 10_500, 10_750, 10_400))
+  short.push(bar(8, 10_500, 10_700, 10_400))
+  for (let i = 9; i < 18; i++) short.push(bar(i, 10_500, 10_600, 10_400))
+
+  test('flag detection stops at the last bar instead of reading past it', () => {
+    expect(() => setupsFor('TSLA', short, [])).not.toThrow()
+    expect(setupsFor('TSLA', short, []).some((s) => s.family === 'flag')).toBe(false)
+  })
+})
+
 describe('the generated session is deterministic', () => {
   test('bars repeat exactly', () => {
     expect(JSON.stringify(generatedBarsFor('TSLA'))).toBe(JSON.stringify(generatedBarsFor('TSLA')))

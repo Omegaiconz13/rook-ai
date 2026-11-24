@@ -194,6 +194,12 @@ describe('ask the desk', () => {
     expect(ask(packet, memo, 'Any news?').refs).toContain('news.blackout')
   })
 
+  test('answers the suggested case-against question instead of refusing it', () => {
+    const a = ask(packet, memo, 'What is the case against?')
+    expect(a.refs).toContain('memo.counterCase')
+    expect(a.answer).toContain(memo.counterCase)
+  })
+
   test('refuses what the packet does not contain', () => {
     const a = ask(packet, memo, 'What will the market do tomorrow?')
     expect(a.refs).toEqual([])

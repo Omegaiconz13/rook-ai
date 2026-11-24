@@ -18,6 +18,7 @@ const Signup = page(() => import('./pages/Signup'), 'Signup')
 const Styleguide = page(() => import('./pages/Styleguide'), 'Styleguide')
 const AppShell = lazy(() => import('./pages/app/AppShell').then((m) => ({ default: m.AppShell })))
 const DeskPage = page(() => import('./pages/app/Desk'), 'DeskPage')
+const ChartsPage = page(() => import('./pages/app/Charts'), 'ChartsPage')
 const RoomPage = page(() => import('./pages/app/Room'), 'RoomPage')
 const SetupPage = page(() => import('./pages/app/Setup'), 'SetupPage')
 const SessionPage = page(() => import('./pages/app/Session'), 'SessionPage')
@@ -39,13 +40,20 @@ const routes: Route[] = [
   { path: '/login', title: 'Log in', layout: 'bare', render: () => <Login /> },
   { path: '/signup', title: 'Sign up', layout: 'bare', render: () => <Signup /> },
   { path: '/app', title: "Today's desk", layout: 'app', render: () => <DeskPage /> },
+  { path: '/app/charts', title: 'Charts', layout: 'app', render: () => <ChartsPage /> },
   { path: '/app/room', title: 'The room', layout: 'app', render: () => <RoomPage /> },
   { path: '/app/risk', title: 'Risk gate', layout: 'app', render: () => <RiskGatePage /> },
   { path: '/app/journal', title: 'Journal', layout: 'app', render: () => <JournalPage /> },
   { path: '/app/chat', title: 'Ask the desk', layout: 'app', render: () => <AskDeskPage /> },
 ]
 
-const Blank = () => <div className="min-h-screen" aria-busy="true" />
+/* A lazy route's fallback: announced, and visibly a page still arriving. */
+const Blank = () => (
+  <div role="status" className="grid min-h-[60svh] place-items-center px-6">
+    <span className="sr-only">Loading…</span>
+    <span aria-hidden className="skeleton h-1.5 w-40 rounded-full" />
+  </div>
+)
 
 export function App() {
   const { path, hash } = useLocation()
@@ -109,5 +117,12 @@ export function App() {
     )
   }
 
-  return <ToastProvider>{body}</ToastProvider>
+  return (
+    <ToastProvider>
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+      {body}
+    </ToastProvider>
+  )
 }

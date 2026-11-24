@@ -24,7 +24,7 @@ import {
   useLimits,
   useTickets,
 } from '../../lib/desk'
-import { barsFor } from '../../shared/fixtures'
+import { barsFor, dailyFor } from '../../shared/fixtures'
 import { rowFromVerdict } from '../../shared/journal'
 import { INSTRUMENTS } from '../../shared/market'
 import { SESSION_DATE } from '../../shared/market'
@@ -37,7 +37,7 @@ function demoClockIso(symbol: string): string {
   return new Date(Date.parse(first.start) + 42 * 60_000).toISOString()
 }
 import type { RiskLimits, TradePlan } from '../../shared/risk'
-import { planFromSetup, setupById } from '../../shared/setups'
+import { planFromSetup, setupById, setupsFor } from '../../shared/setups'
 import { usdToCents, money } from '../../shared/sizing'
 import { confirmTicket, proposeTicket, ticketProblem, TICKET_LABEL } from '../../shared/ticket'
 import { AppHeader } from './AppHeader'
@@ -95,6 +95,18 @@ export function RiskGatePage() {
     }
     return next
   })
+
+  // The levels belong to the symbol: switching it loads that symbol's written setup
+  // rather than checking the new ticker at the previous one's entry, stop and target.
+  const setSymbol = (symbol: string) => {
+    const setups = setupsFor(symbol, barsFor(symbol), dailyFor(symbol))
+    const setup = setups.find((s) => s.status === 'triggered') ?? setups[0]
+    if (!setup) {
+      setLevel({ symbol, setupId: null })
+      return
+    }
+    setPlan(planFromSetup(setup))
+  }
 
   const setTargetAtR = (r: number) => {
     const entry = plan.entryCents
@@ -343,11 +355,7 @@ export function RiskGatePage() {
             </p>
 
             <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              <Select
-                label="Symbol"
-                value={plan.symbol}
-                onChange={(e) => setLevel({ symbol: e.target.value, setupId: null })}
-              >
+              <Select label="Symbol" value={plan.symbol} onChange={(e) => setSymbol(e.target.value)}>
                 {INSTRUMENTS.map((i) => (
                   <option key={i.symbol} value={i.symbol}>
                     {i.symbol} · {i.name}

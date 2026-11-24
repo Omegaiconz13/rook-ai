@@ -266,9 +266,22 @@ export function generatedDailyFor(symbol: string): DailyBar[] {
 /* ---- The desk's data API: yfinance snapshot first, generated session second ---- */
 
 /** The desk session's bars, oldest first. */
+const BARS_CACHE = new Map<string, Bar[]>()
+
+/**
+ * The snapshot's 5-minute bars. Cached per symbol because callers hand the result
+ * straight to the chart as an effect dependency: a fresh array every render would
+ * tear the chart down and draw it again. The bars are read-only everywhere.
+ */
 export function barsFor(symbol: string): Bar[] {
-  const real = marketBars(symbol)
-  return real.length ? real : generatedBarsFor(symbol)
+  const key = symbol.toUpperCase()
+  let bars = BARS_CACHE.get(key)
+  if (!bars) {
+    const real = marketBars(key)
+    bars = real.length ? real : generatedBarsFor(key)
+    BARS_CACHE.set(key, bars)
+  }
+  return bars
 }
 
 export function dailyFor(symbol: string): DailyBar[] {

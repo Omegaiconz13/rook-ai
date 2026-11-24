@@ -1,6 +1,7 @@
-import { useCallback } from 'react'
+import { useCallback, useMemo } from 'react'
 
-import type { JournalRow } from '../shared/journal'
+import { JOURNAL_MAX_ROWS, journalBundle, migrateDayNotes, migrateJournal, upsertDayNote } from '../shared/journal'
+import type { DayNote, JournalBundle, JournalRow } from '../shared/journal'
 import type { Memo, Packet } from '../shared/packet'
 import type { Account, RiskLimits, SessionInfo } from '../shared/risk'
 import { cancelTicket } from '../shared/ticket'
@@ -20,6 +21,7 @@ export const KEY = {
   limits: 'v1:limits',
   account: 'v1:account',
   journal: 'v1:journal',
+  dayNotes: 'v1:daynotes',
   memos: 'v1:memos',
   user: 'v1:user',
   confirmed: 'v1:confirmed',
@@ -67,8 +69,33 @@ export function useSeed() {
   return useStored<number>(KEY.seed, 19)
 }
 
+/**
+ * Rows as they are read: whatever version the browser stored, filled forward to
+ * the current shape. A reader's journal from before the schema change keeps
+ * working; new fields arrive empty rather than undefined.
+ */
+export function readJournal(): JournalRow[] {
+  return migrateJournal(readStore<unknown>(KEY.journal, []))
+}
+
+function writeJournal(rows: JournalRow[]) {
+  writeStore(KEY.journal, rows.slice(0, JOURNAL_MAX_ROWS))
+}
+
 export function useJournal() {
-  return useStored<JournalRow[]>(KEY.journal, [])
+  const [raw, set] = useStored<unknown>(KEY.journal, [])
+  const rows = useMemo(() => migrateJournal(raw), [raw])
+  return [rows, set] as const
+}
+
+export function useDayNotes() {
+  return useStored<DayNote[]>(KEY.dayNotes, [])
+}
+
+/** Write the note for a session date; an empty note removes it. */
+export function saveDayNote(date: string, note: string) {
+  const notes = migrateDayNotes(readStore<unknown>(KEY.dayNotes, []))
+  writeStore(KEY.dayNotes, upsertDayNote(notes, date, note))
 }
 
 /** Account as the gate expects it: equity always mirrors the written limits. */
@@ -100,18 +127,39 @@ export function useLastMemo(): StoredMemo | null {
 }
 
 export function appendJournal(row: JournalRow) {
-  const rows = readStore<JournalRow[]>(KEY.journal, [])
-  writeStore(KEY.journal, [row, ...rows].slice(0, 200))
+  writeJournal([row, ...readJournal()])
 }
 
-export function updateJournalRow(tradeId: string, patch: Partial<JournalRow>) {
-  const rows = readStore<JournalRow[]>(KEY.journal, [])
-  writeStore(KEY.journal, rows.map((r) => (r.tradeId === tradeId ? { ...r, ...patch } : r)))
+/**
+ * Patch a row. `byHand` stamps `editedAt`, so a record the reader changed is
+ * distinguishable from one the desk wrote and never touched — the automatic R
+ * result from settling a ticket must not look like an edit.
+ */
+export function updateJournalRow(tradeId: string, patch: Partial<JournalRow>, byHand = true) {
+  const rows = readJournal()
+  writeJournal(
+    rows.map((r) => (r.tradeId === tradeId ? { ...r, ...patch, editedAt: byHand ? new Date().toISOString() : r.editedAt } : r)),
+  )
+}
+
+export function deleteJournalRow(tradeId: string) {
+  writeJournal(readJournal().filter((r) => r.tradeId !== tradeId))
+}
+
+/** Everything the reader owns, in one value: the backup file is exactly this. */
+export function exportJournal(): JournalBundle {
+  return journalBundle(readJournal(), migrateDayNotes(readStore<unknown>(KEY.dayNotes, [])), new Date().toISOString())
+}
+
+/** Replace the journal with a restored backup. Newest row first, as the page shows them. */
+export function importJournal(rows: JournalRow[], dayNotes: DayNote[]) {
+  writeJournal([...rows].sort((a, b) => b.date.localeCompare(a.date)))
+  writeStore(KEY.dayNotes, migrateDayNotes(dayNotes))
 }
 
 export function useJournalActions() {
   const append = useCallback((row: JournalRow) => appendJournal(row), [])
-  const clear = useCallback(() => writeStore(KEY.journal, []), [])
+  const clear = useCallback(() => writeJournal([]), [])
   return { append, clear }
 }
 

@@ -13,6 +13,7 @@ import { useLocation } from '../../lib/router'
 import { accountFor, appendMemo, useAccountState, useConfirmed, useDeskSession, useLimits } from '../../lib/desk'
 import type { RoomResult } from '../../shared/packet'
 import { runRoom } from '../../shared/packet'
+import { SESSION_DATE } from '../../shared/market'
 import type { TradePlan } from '../../shared/risk'
 import { deskSetups, FAMILY_LABEL, planFromSetup, setupById } from '../../shared/setups'
 import { price } from '../../shared/sizing'
@@ -41,7 +42,7 @@ export function RoomPage() {
       limits,
       account: accountFor(limits, stored),
       session,
-      history: confirmed.filter((h) => h.sessionDate === '2026-11-19'),
+      history: confirmed.filter((h) => h.sessionDate === SESSION_DATE),
     })
     setResult(next)
     appendMemo(next)

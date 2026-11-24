@@ -64,7 +64,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
       aria-label={label}
       title={label}
       data-force={force}
-      className={cx('btn', `btn-${variant}`, size === 'sm' ? 'size-10' : 'size-11', '!p-0', className)}
+      className={cx('btn', `btn-${variant}`, 'btn-icon', size === 'sm' ? 'size-10' : 'size-11', '!p-0', className)}
       {...rest}
     >
       {children}

@@ -1,6 +1,6 @@
 # Rook: the AI trading desk
 
-A supervised desk for one trade at a time. Nine seats read a session and argue
+A supervised desk for one trade at a time. Eight seats read a session and argue
 both sides, plain code decides whether the trade is allowed, and every decision
 — including every refusal — is journaled. Paper only, and the demo runs offline
 against one labelled session of delayed Yahoo Finance bars, with no keys and no
@@ -59,11 +59,12 @@ diff is the record of what changed.
 | `/about` | Story, numbers, values, contact form |
 | `/login`, `/signup` | Demo account screens, validated by the Worker, user kept in localStorage |
 | `/app` | Today's desk: risk budget, setups found by the rules, search and family filter |
+| `/app/charts` | The full chart workspace (Vela) over the same snapshot: symbol search, timeframes, indicators, drawings, layouts |
 | `/app/setup/:symbol` | One symbol: candles, opening range, plan levels, Time Machine, and the sessions behind its count |
 | `/app/session/:symbol/:date` | One past session from that count, levels drawn, outcome stated |
 | `/app/room` | The seats: run the room on a plan, read the memo and the case against |
 | `/app/risk` | The gate: edit limits, check a plan against all 15 rules, confirm a paper ticket |
-| `/app/journal` | Journal rows, weekly review, paper tickets, CSV export |
+| `/app/journal` | The journal: rows (gate checks and entries written by hand), a month calendar and a day note per session, analytics with sample gates, row editing, paper tickets, CSV and JSON backup/restore |
 | `/app/chat` | Ask the desk, answered from the last packet with a citation |
 | `/styleguide` | Every token and component, rendered by the real code |
 | anything else | 404 |
@@ -79,11 +80,14 @@ diff is the record of what changed.
 | `src/shared/setups.ts` | The four written setups (opening range, bull flag, gap retest, 20-day reclaim) |
 | `src/shared/risk.ts` | The gate, rules R-01 to R-15. Contract: `specs/001-ai-trading-desk/contracts/risk-engine.md` |
 | `src/shared/sizing.ts` | Integer-cent money, position sizing and the limit that decided it |
-| `src/shared/journal.ts` | Row schema, weekly summary, CSV |
+| `src/shared/journal.ts` | Row schema and migration, day notes, calendar, analytics, weekly summary, CSV and JSON backup |
 | `src/shared/stats.ts` | Wilson intervals, sample gates and split-half agreement behind every percentage |
 | `src/shared/ticket.ts` | Paper-ticket state machine and the fill replay |
 | `src/shared/simulate.ts` | Time Machine: 10k seeded replays from the past sessions |
 | `src/shared/packet.ts` | Seat notes, rubric, memo, grounded answers |
+| `src/shared/chartfeed.ts` | The chart's bars: cents → price, session-aware aggregation, daily candles |
+| `src/lib/rook-provider.ts` | Rook's symbols and timeframes, served through Vela's data-provider port |
+| `docs/vela.md` | The chart integration's seams, upgrade ritual, contract checks and licensing notes |
 | `src/lib/desk.ts` | Everything stored in this browser, under `desk:v1:` |
 | `src/worker/index.ts` | The API (below). Stateless, no database |
 | `src/content.ts` | Every marketing string, plan and image path |

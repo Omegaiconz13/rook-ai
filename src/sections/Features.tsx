@@ -20,7 +20,7 @@ const RULES = [
 /** The gate card is drawn, not photographed: real rule ids, one of them red. */
 function RuleListArt() {
   return (
-    <div className="relative grid h-full content-center gap-1.5 overflow-hidden bg-[radial-gradient(120%_100%_at_20%_0%,#0f2a17,#050906_72%)] p-4">
+    <div className="relative grid h-full content-center gap-1.5 overflow-hidden bg-[radial-gradient(120%_100%_at_20%_0%,var(--color-panel-2),var(--color-bg)_72%)] p-4">
       {RULES.map((r) => (
         <div
           key={r.id}
@@ -59,7 +59,7 @@ export function Features() {
                 </div>
                 <div className="-mt-6 p-7 pt-0">
                   <h3 className="relative text-[22px] font-medium leading-tight tracking-[-0.03em]">{f.title}</h3>
-                  <p className="mt-3 text-[15px] leading-relaxed text-muted">{f.body}</p>
+                  <p className="mt-3 text-[16px] leading-relaxed text-muted">{f.body}</p>
                 </div>
               </article>
             </Reveal>
@@ -76,7 +76,7 @@ export function Features() {
                   </span>
                   <span>
                     <span className="block text-[15.5px] font-medium">{x.title}</span>
-                    <span className="mt-1 block text-[14px] leading-snug text-muted">{x.body}</span>
+                    <span className="mt-1 block text-[16px] leading-snug text-muted">{x.body}</span>
                   </span>
                 </Reveal>
               </li>

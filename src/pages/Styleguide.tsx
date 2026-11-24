@@ -28,6 +28,7 @@ import { StatTile } from '../components/StatTile'
 import { useToast } from '../components/Toast'
 import { TradeCard } from '../components/TradeCard'
 import { TypingDots } from '../components/TypingDots'
+import Navigation from '../components/ui/demo'
 import { GateVerdictCard, VerdictPill } from '../components/Verdict'
 import { FAQ, PLANS } from '../content'
 import { barsFor } from '../shared/fixtures'
@@ -91,7 +92,7 @@ const TYPE = [
   { name: 'H2', cls: 'text-[46px] leading-[1.02] tracking-[-0.045em]', spec: '46 / 1.02, -4.5%, 400' },
   { name: 'H3', cls: 'text-[22px] font-medium tracking-[-0.03em]', spec: '22, -3%, 500' },
   { name: 'Body large', cls: 'text-[17px] leading-relaxed text-soft', spec: '17 / 1.6, 400' },
-  { name: 'Body', cls: 'text-[15px] leading-relaxed text-soft', spec: '15 / 1.6, 400' },
+  { name: 'Body', cls: 'text-[16px] leading-relaxed text-soft', spec: '16 / 1.6, 400' },
   { name: 'Small', cls: 'text-[13px] text-muted', spec: '13, 400' },
   { name: 'Mono', cls: 'font-mono text-[13px] text-leaf-text', spec: 'JetBrains Mono 13' },
 ]
@@ -143,7 +144,7 @@ export function Styleguide() {
       <h1 className="mt-4 text-[clamp(40px,5vw,64px)] font-normal tracking-[-0.05em]">Rook style guide</h1>
       <p className="mt-4 max-w-2xl text-[17px] text-muted">Every token and component, rendered by the real code. Tokens live in src/styles.css; components in src/components.</p>
       <nav aria-label="Sections" className="mt-8 flex flex-wrap gap-2">
-        {['colour', 'type', 'space', 'radii', 'shadow', 'motion', 'buttons', 'fields', 'feedback', 'desk', 'content'].map((s) => (
+        {['colour', 'type', 'space', 'radii', 'shadow', 'motion', 'buttons', 'fields', 'feedback', 'navigation', 'desk', 'content'].map((s) => (
           <a key={s} href={`#${s}`} className="btn btn-glass btn-sm h-10 capitalize">
             {s}
           </a>
@@ -374,6 +375,17 @@ export function Styleguide() {
             </Button>
           </div>
         </Modal>
+      </Block>
+
+      <Block title="Navigation" id="navigation">
+        <div className="flex flex-wrap items-center gap-4">
+          <Navigation />
+          <p className="text-[13px] text-muted">
+            HeroUI's drawer (<code className="font-mono text-[12px]">src/components/ui/heroui-drawer.tsx</code>) with our surface tokens. On the desk it
+            becomes the phone menu; the rail at{' '}
+            <code className="font-mono text-[12px]">/app</code> opens on hover and collapses to icons when you pick a seat.
+          </p>
+        </div>
       </Block>
 
       <Block title="Desk components" id="desk">

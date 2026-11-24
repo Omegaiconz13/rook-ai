@@ -17,7 +17,7 @@ export function Segmented<T extends string>({ label, options, value, onChange, c
     refs.current[n]?.focus()
   }
   return (
-    <div role="radiogroup" aria-label={label} className={cx('inline-flex rounded-full border border-line bg-white/4 p-1', className)}>
+    <div role="radiogroup" aria-label={label} className={cx('inline-flex max-w-full flex-wrap rounded-full border border-line bg-white/4 p-1', className)}>
       {options.map((o, i) => {
         const on = o.value === value
         return (
@@ -33,7 +33,7 @@ export function Segmented<T extends string>({ label, options, value, onChange, c
             onClick={() => onChange(o.value)}
             onKeyDown={(e) => onKey(e, i)}
             className={cx(
-              'inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium transition-colors',
+              'tap-target inline-flex h-10 min-w-10 items-center justify-center gap-1.5 rounded-full px-4 text-[13.5px] font-medium transition-colors',
               on ? 'bg-paper text-ink shadow-sm' : 'text-soft hover:text-fg',
             )}
           >

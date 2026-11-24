@@ -38,7 +38,7 @@ export function About() {
               <Reveal key={v.title} delay={i * 80} className="glass h-full rounded-[26px] p-7">
                 <span className="font-mono text-[13px] text-leaf-text">0{i + 1}</span>
                 <h3 className="mt-6 text-[20px] font-medium tracking-[-0.02em]">{v.title}</h3>
-                <p className="mt-2.5 text-[15px] leading-relaxed text-muted">{v.body}</p>
+                <p className="mt-2.5 text-[16px] leading-relaxed text-muted">{v.body}</p>
               </Reveal>
             ))}
           </div>

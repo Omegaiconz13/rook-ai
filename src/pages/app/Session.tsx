@@ -87,6 +87,7 @@ export function SessionPage() {
 
         <BarChart
           bars={bars}
+          symbol={symbol}
           rangeHigh={occurrence.rangeHighCents}
           rangeLow={occurrence.rangeLowCents}
           entry={occurrence.entryCents}

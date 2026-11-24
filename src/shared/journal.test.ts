@@ -1,6 +1,21 @@
 import { describe, expect, test } from 'bun:test'
 
-import { JOURNAL_COLUMNS, journalFilename, rowFromVerdict, toCsv, weekSummary } from './journal'
+import {
+  JOURNAL_COLUMNS,
+  calendarMonth,
+  journalAnalytics,
+  journalFilename,
+  manualRow,
+  migrateDayNotes,
+  migrateJournal,
+  parseJournalBundle,
+  rowFromVerdict,
+  shiftMonth,
+  toCsv,
+  toJournalJson,
+  upsertDayNote,
+  weekSummary,
+} from './journal'
 import type { JournalRow } from './journal'
 import type { GateVerdict, SessionInfo, TradePlan } from './risk'
 
@@ -119,5 +134,170 @@ describe('week summary', () => {
     const s = weekSummary(rows)
     expect(s.ruleBreaks).toBe(1)
     expect(s.suggestion).toContain('broke a written rule')
+  })
+})
+
+describe('a row written by hand', () => {
+  const manual = manualRow({
+    date: '2026-11-19',
+    symbol: 'aapl',
+    setup: 'manual',
+    entryCents: 20_000,
+    stopCents: 19_500,
+    targetCents: 21_000,
+    size: 10,
+    note: 'bought the reclaim',
+    tags: ['A+', 'a+', ' news'],
+  })
+
+  test('is MANUAL, never a gate approval', () => {
+    expect(manual?.verdict).toBe('MANUAL')
+    expect(manual?.source).toBe('manual')
+    expect(manual?.took).toBe(true)
+    expect(manual?.gateRule).toBe('')
+    expect(manual?.symbol).toBe('AAPL')
+  })
+
+  test('takes its R plan from its own levels, and dedupes tags', () => {
+    expect(manual?.rPlanned).toBe('2.00')
+    expect(manual?.tags).toEqual(['A+', 'news'])
+    expect(manual?.rResult).toBeNull()
+  })
+
+  test('refuses levels that are not a long', () => {
+    expect(manualRow({ date: '2026-11-19', symbol: 'TSLA', setup: 'manual', entryCents: 100, stopCents: 120, targetCents: 140, size: 1 })).toBeNull()
+    expect(manualRow({ date: '2026-11-19', symbol: 'TSLA', setup: 'manual', entryCents: 100, stopCents: 90, targetCents: 95, size: 1 })).toBeNull()
+  })
+})
+
+describe('the stored shape moves forward', () => {
+  test('a row from before tags and source keeps working', () => {
+    const [old] = migrateJournal([
+      { tradeId: 'x1', date: '2026-11-19', session: 'open', symbol: 'tsla', setup: 'orb', verdict: 'BLOCKED', gateRule: 'R-12', took: false, size: 0, note: 'n' },
+    ])
+    expect(old.symbol).toBe('TSLA')
+    expect(old.tags).toEqual([])
+    expect(old.source).toBe('gate')
+    expect(old.editedAt).toBeNull()
+    expect(old.rulesFollowed).toBe(true)
+  })
+
+  test('junk and rows without a trade id are dropped, not fatal', () => {
+    expect(migrateJournal(null)).toEqual([])
+    expect(migrateJournal([{ date: '2026-11-19' }, 'nope', 42])).toEqual([])
+  })
+
+  test('a manual verdict implies the manual source', () => {
+    const [row] = migrateJournal([{ tradeId: 'm1', date: '2026-11-19', symbol: 'NVDA', verdict: 'MANUAL' }])
+    expect(row.source).toBe('manual')
+    expect(row.setup).toBe('manual')
+  })
+
+  test('day notes are cleaned, sorted and empty ones dropped', () => {
+    const notes = migrateDayNotes([
+      { date: '2026-11-19', note: 'b', updatedAt: '2026-11-19T21:00:00.000Z' },
+      { date: '2026-11-18', note: 'a', updatedAt: '2026-11-18T21:00:00.000Z' },
+      { date: '2026-11-17', note: '   ', updatedAt: '2026-11-17T21:00:00.000Z' },
+    ])
+    expect(notes.map((n) => n.date)).toEqual(['2026-11-18', '2026-11-19'])
+    expect(upsertDayNote(notes, '2026-11-19', '   ').map((n) => n.date)).toEqual(['2026-11-18'])
+  })
+})
+
+describe('the calendar', () => {
+  const rows = [
+    row({ tradeId: 'a', date: '2026-11-19', rResult: 2 }),
+    row({ tradeId: 'b', date: '2026-11-19', rResult: -1 }),
+    row({ tradeId: 'c', date: '2026-11-18', verdict: 'BLOCKED', gateRule: 'R-12', took: false, size: 0, rResult: 0 }),
+  ]
+  const month = calendarMonth(rows, 2026, 10, '2026-11-19')
+
+  test('is six Monday-first weeks, so the grid never jumps', () => {
+    expect(month.weeks).toHaveLength(6)
+    expect(month.weeks.every((w) => w.length === 7)).toBe(true)
+    expect(month.label).toBe('November 2026')
+  })
+
+  test('buckets rows by their own session date, with closed R only', () => {
+    const day = month.weeks.flat().find((d) => d.date === '2026-11-19')
+    expect(day).toMatchObject({ inMonth: true, isToday: true, rows: 2, taken: 2, closed: 2, sumR: 1 })
+    const blockedDay = month.weeks.flat().find((d) => d.date === '2026-11-18')
+    expect(blockedDay).toMatchObject({ rows: 1, taken: 0, closed: 0, sumR: 0 })
+  })
+
+  test('pads with the neighbouring month and totals only its own days', () => {
+    expect(month.weeks[0][0]).toMatchObject({ date: '2026-10-26', inMonth: false })
+    expect(month.totals).toEqual({ rows: 3, taken: 2, closed: 2, sumR: 1 })
+    expect(shiftMonth(2026, 11, 1)).toEqual({ year: 2027, month: 0 })
+  })
+})
+
+describe('analytics', () => {
+  // Newest first, as the store keeps them: +2 newest, -1 oldest.
+  const results = [2, -1, -1, 2, 1, -1, 2, -1, 2, 2, 1, -1]
+  const rows = results.map((r, i) => row({ tradeId: `t${i}`, rResult: r }))
+
+  test('reads the rows in the order they happened', () => {
+    const a = journalAnalytics(rows)
+    expect(a.closed).toBe(12)
+    expect(a.tooSmall).toBe(false)
+    expect(a.expectancyR).toBe(0.58)
+    expect(a.profitFactor).toBe(2.4)
+    // Cumulative R runs −1, 0, 2, 4, 3, 5, 4, 5, 7, 6, 5, 7: the worst fall from a peak is 2.
+    expect(a.maxDrawdownR).toBe(2)
+    expect(a.currentStreak).toEqual({ kind: 'win', length: 1 })
+    expect(a.winRate.n).toBe(12)
+    expect(a.bySymbol[0]).toMatchObject({ key: 'TSLA', closed: 12, sumR: 7 })
+  })
+
+  test('below ten closed trades it will not print a rate or a factor', () => {
+    const a = journalAnalytics(rows.slice(0, 4))
+    expect(a.tooSmall).toBe(true)
+    expect(a.expectancyR).toBeNull()
+    expect(a.profitFactor).toBeNull()
+    expect(a.winRate.reliable).toBe(false)
+    // The drawdown is still arithmetic — it just is not presented as an edge.
+    expect(a.maxDrawdownR).toBe(2)
+  })
+
+  test('blocked rows are counted by the rule that refused them', () => {
+    const a = journalAnalytics([
+      row({ tradeId: 'b1', verdict: 'BLOCKED', gateRule: 'R-12', took: false, rResult: 0 }),
+      row({ tradeId: 'b2', verdict: 'BLOCKED', gateRule: 'R-12', took: false, rResult: 0 }),
+      row({ tradeId: 'b3', verdict: 'BLOCKED', gateRule: 'R-04', took: false, rResult: 0 }),
+    ])
+    expect(a.blocksByRule).toEqual([
+      { ruleId: 'R-12', count: 2 },
+      { ruleId: 'R-04', count: 1 },
+    ])
+  })
+})
+
+describe('the backup file', () => {
+  const notes = [{ date: '2026-11-19', note: 'patience', updatedAt: '2026-11-19T21:00:00.000Z' }]
+
+  test('round-trips rows and day notes', () => {
+    const parsed = parseJournalBundle(toJournalJson([row()], notes, '2026-11-19T22:00:00.000Z'))
+    expect(parsed.ok).toBe(true)
+    if (!parsed.ok) return
+    expect(parsed.rows).toHaveLength(1)
+    expect(parsed.dayNotes).toEqual(notes)
+  })
+
+  test('a bare array of rows is accepted', () => {
+    const parsed = parseJournalBundle(JSON.stringify([row()]))
+    expect(parsed.ok).toBe(true)
+    if (parsed.ok) expect(parsed.dayNotes).toEqual([])
+  })
+
+  test('refuses a file that is not a journal', () => {
+    expect(parseJournalBundle('not json')).toEqual({ ok: false, error: 'That file is not JSON. Pick the .json export from this page.' })
+    expect(parseJournalBundle('{"rows": []}').ok).toBe(false)
+    expect(parseJournalBundle('{"hello": 1}').ok).toBe(false)
+  })
+
+  test('the CSV is still the seventeen documented columns', () => {
+    expect(toCsv([]).split('\n')[0]).toBe(JOURNAL_COLUMNS.join(','))
+    expect(toCsv([row()]).split('\n')[1].split(',').length).toBe(17)
   })
 })

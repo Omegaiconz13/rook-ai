@@ -4,7 +4,7 @@ import { ArrowDownRight } from 'lucide-react'
 import { cx } from '../lib/cx'
 import { LIMIT_DEFAULTS } from '../lib/desk'
 import { barsFor, dailyFor } from '../shared/fixtures'
-import { DATA } from '../shared/market'
+import { DATA, SESSION_DATE } from '../shared/market'
 import { checkPlan } from '../shared/risk'
 import type { TradePlan } from '../shared/risk'
 import { setupsFor } from '../shared/setups'
@@ -36,7 +36,14 @@ export function TradeCard({ className }: { className?: string }) {
     const verdict = checkPlan({
       plan,
       limits: LIMIT_DEFAULTS,
-      account: { equityCents: LIMIT_DEFAULTS.equityCents, dayPnlCents: 0, tradesToday: 0, riskUsedCents: 0, killSwitch: false, sessionDate: '2026-11-19' },
+      account: {
+        equityCents: LIMIT_DEFAULTS.equityCents,
+        dayPnlCents: 0,
+        tradesToday: 0,
+        riskUsedCents: 0,
+        killSwitch: false,
+        sessionDate: SESSION_DATE,
+      },
       session: { state: 'open', nowEt: '10:12' },
       history: [],
     })
@@ -74,7 +81,7 @@ export function TradeCard({ className }: { className?: string }) {
         ))}
       </dl>
 
-      <div className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-black/25 px-3 py-2">
+      <div className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-ink/25 px-3 py-2">
         <span className="font-mono text-[11.5px] text-danger">{verdict.ruleId}</span>
         <span className="text-right text-[11.5px] leading-tight text-danger">
           {verdict.rewardRisk.toFixed(2)}R against your 1.50 minimum

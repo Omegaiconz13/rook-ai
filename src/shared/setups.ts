@@ -116,15 +116,18 @@ function flagSetup(symbol: string, bars: Bar[]): Setup | null {
   const lead = bars[5].close / bars[0].close - 1
   if (lead < 0.01) return null
 
+  // A partial session can end before 11:30, so the scan stops at its last bar:
+  // reading `bars[24]` off an eighteen-bar session throws and takes the desk down.
+  const scanTo = Math.min(ENTRY_WINDOW_BARS, bars.length - 1)
   for (let i = 6; i <= 14; i++) {
     const flag = bars.slice(i, i + 3)
-    if (flag.length < 3) return null
+    if (flag.length < 3) break
     if (!(flag[1].high < flag[0].high && flag[2].high < flag[1].high)) continue
     const flagHigh = Math.max(...flag.map((b) => b.high))
     const flagLow = Math.min(...flag.map((b) => b.low))
     if (flagHigh <= bars[4].close) continue
 
-    for (let j = i + 3; j <= ENTRY_WINDOW_BARS; j++) {
+    for (let j = i + 3; j <= scanTo; j++) {
       if (bars[j].close > flagHigh) {
         return makeSetup({
           symbol,

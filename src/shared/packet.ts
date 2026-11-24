@@ -437,6 +437,13 @@ export function ask(packet: Packet, memo: Memo, question: string): Answer {
     }
   }
 
+  if (/case against|against|counter/.test(q)) {
+    return {
+      answer: `The strongest case against: “${memo.counterCase}” The memo scores ${memo.rubricScore}/5 and reads **${memo.decision}**.`,
+      refs: ['memo.counterCase', 'memo.rubricScore'],
+    }
+  }
+
   if (/size|share|position|how many|risk/.test(q)) {
     if (!gate.size) {
       return {

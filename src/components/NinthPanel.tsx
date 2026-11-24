@@ -1,0 +1,222 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Crosshair, Maximize2, Minimize2, RotateCcw, Send, X } from 'lucide-react'
+import type { Vela } from '@luxalgo/vela'
+
+import { bareTicker, chartHistory, DEFAULT_TIMEFRAME, TIMEFRAME_LABEL, timeframeFor } from '../shared/chartfeed'
+import { barsFor, dailyFor } from '../shared/fixtures'
+import { SESSION_DATE } from '../shared/market'
+import { analyzeNinth, answerNinth, NINTH_NAME } from '../shared/ninth'
+import type { NinthContext } from '../shared/ninth'
+import { setupsFor } from '../shared/setups'
+import { useJournal, useLastMemo } from '../lib/desk'
+import { drawSetupLevels, drawSetupPosition, setupLevelsFor } from '../lib/vela'
+import { Button } from './Button'
+import { ChatBubble } from './ChatBubble'
+
+type Message = { id: number; from: 'you' | 'ninth'; text: string; refs?: string[] }
+
+const SUGGESTIONS = ['Where are the levels?', 'Any setups on the scan?', 'Why was it blocked?', 'What did I journal?']
+
+type Props = {
+  /** The chart to read, resolved at the moment of every question (the shell rebinds it). */
+  getChart: () => Vela | null
+  /**
+   * The row's controls: close always, maximize only where the host can expand
+   * the panel. A phone overlay passes close alone, so it draws no dead button.
+   */
+  header: { readonly maximized?: boolean; setMaximized?: (maximized: boolean) => void; close: () => void }
+}
+
+/**
+ * Ninth, docked beside the chart. This is its desk-mode mouth: every answer is
+ * assembled from the snapshot, the written rules, the gate and the journal, so
+ * it works with no model, no key and no network — and says when it has nothing
+ * to read instead of guessing.
+ */
+export function NinthPanel({ getChart, header }: Props) {
+  const [messages, setMessages] = useState<Message[]>([])
+  const [draft, setDraft] = useState('')
+  const nextId = useRef(1)
+  const [journal] = useJournal()
+  const memo = useLastMemo()?.memo ?? null
+  const [, rerender] = useState(0)
+
+  const chart = getChart()
+  const symbol = chart ? bareTicker(chart.market.symbol ?? '') : ''
+  const timeframe = timeframeFor(chart?.market.timeframe ?? '') ?? DEFAULT_TIMEFRAME
+  const timeframeLabel = TIMEFRAME_LABEL[timeframe]
+
+  // A cell can switch symbol or timeframe under the open panel; the strip and the
+  // answers follow it rather than describing the chart the panel opened on.
+  useEffect(() => {
+    if (!chart) return
+    return chart.on('market:changed', () => rerender((tick) => tick + 1))
+  }, [chart])
+
+  const context = useMemo<NinthContext>(
+    () => ({
+      symbol,
+      timeframe: timeframeLabel,
+      bars: symbol ? chartHistory(symbol, timeframe) : [],
+      levels: symbol ? setupLevelsFor(symbol).map((level) => ({ label: level.label, priceCents: level.priceCents })) : [],
+      setups: symbol ? setupsFor(symbol, barsFor(symbol), dailyFor(symbol)) : [],
+      journal,
+      memo,
+      today: SESSION_DATE,
+    }),
+    [symbol, timeframe, timeframeLabel, journal, memo],
+  )
+
+  const maximized = header.maximized
+  const canClear = messages.length > 0
+
+  const send = (question: string) => {
+    const q = question.trim()
+    if (!q) return
+    const answer = answerNinth(q, context)
+    setMessages((prev) => [
+      ...prev,
+      { id: nextId.current++, from: 'you', text: q },
+      { id: nextId.current++, from: 'ninth', text: answer.text, refs: answer.refs },
+    ])
+    setDraft('')
+  }
+
+  /**
+   * Analyze is the one command that also writes: it reads the same snapshot the
+   * answers use, then puts the rule's levels and its position tool on the chart.
+   * The files it needs are already in the chart's drawings document, so nothing
+   * is stored twice.
+   */
+  const analyze = () => {
+    const answer = analyzeNinth(context)
+    const chart = getChart()
+    const range = chart?.getVisibleRange() ?? null
+    let drawn = ' No chart is bound to this panel, so nothing was drawn.'
+    if (chart && symbol) {
+      const levels = drawSetupLevels(chart, symbol, range ?? undefined)
+      const position = drawSetupPosition(chart, symbol, range ?? undefined)
+      drawn =
+        position.length > 0
+          ? ` I drew ${levels.length} level lines and the position tool on the chart; its handles are the rule's entry, stop and target.`
+          : chart.drawings.supported
+            ? ' No rule setup matched this symbol, so nothing was drawn.'
+            : ' This chart cannot draw, so nothing was placed on it.'
+    }
+    setMessages((prev) => [
+      ...prev,
+      { id: nextId.current++, from: 'you', text: 'Analyze' },
+      { id: nextId.current++, from: 'ninth', text: `${answer.text}${drawn}`, refs: answer.refs },
+    ])
+  }
+
+  return (
+    <div className="flex h-full min-h-0 w-full flex-col bg-panel">
+      <div className="flex shrink-0 items-center gap-2 border-b border-line px-3 py-2">
+        <span className="text-[13px] font-semibold tracking-[0.01em] text-fg">{NINTH_NAME}</span>
+        <span className="truncate rounded-full border border-line px-2 py-0.5 font-mono text-[11px] text-faint">
+          {symbol || 'chart'} · {timeframeLabel}
+        </span>
+        <span className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            onClick={() => setMessages([])}
+            disabled={!canClear}
+            aria-label="Clear conversation"
+            className="tap-target grid size-8 place-items-center rounded-full text-faint transition hover:bg-white/8 hover:text-fg disabled:opacity-40"
+          >
+            <RotateCcw aria-hidden className="size-4" />
+          </button>
+          {header.setMaximized && (
+            <button
+              type="button"
+              onClick={() => header.setMaximized?.(!header.maximized)}
+              aria-label={maximized ? 'Restore Ninth' : 'Maximize Ninth'}
+              aria-pressed={!!maximized}
+              className="tap-target grid size-8 place-items-center rounded-full text-faint transition hover:bg-white/8 hover:text-fg"
+            >
+              {maximized ? <Minimize2 aria-hidden className="size-4" /> : <Maximize2 aria-hidden className="size-4" />}
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => header.close()}
+            aria-label="Close Ninth"
+            className="tap-target grid size-8 place-items-center rounded-full text-faint transition hover:bg-white/8 hover:text-fg"
+          >
+            <X aria-hidden className="size-4" />
+          </button>
+        </span>
+      </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-3 py-3" role="log" aria-live="polite" aria-label="Conversation with Ninth">
+        {messages.length === 0 ? (
+          <div className="grid gap-3">
+            <p className="text-[16px] leading-relaxed text-muted">
+              I read the chart in front of you, its written levels, the setups, the last memo and the journal. Ask about any of
+              them and I will name where the answer came from.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {SUGGESTIONS.map((suggestion) => (
+                <Button key={suggestion} variant="glass" size="sm" onClick={() => send(suggestion)}>
+                  {suggestion}
+                </Button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4">
+            {messages.map((message) => (
+              <ChatBubble
+                key={message.id}
+                from={message.from === 'you' ? 'you' : 'desk'}
+                text={message.text}
+                cite={message.refs?.length ? message.refs.join(' · ') : undefined}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault()
+          send(draft)
+        }}
+        className="shrink-0 border-t border-line px-3 py-2.5"
+      >
+        <div className="mb-2 flex items-center gap-2">
+          <Button variant="leaf" size="md" icon={<Crosshair aria-hidden className="size-4" />} onClick={analyze}>
+            Analyze
+          </Button>
+          <span className="truncate text-[11.5px] text-faint">reads the chart · draws the setup</span>
+        </div>
+        <label htmlFor="ninth-input" className="sr-only">
+          Ask {NINTH_NAME} about this chart
+        </label>
+        <div className="flex items-end gap-2">
+          <textarea
+            id="ninth-input"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault()
+                send(draft)
+              }
+            }}
+            rows={2}
+            placeholder="Ask about the levels, the gate, the journal…"
+            className="field min-h-11 flex-1 resize-none py-2 text-[16px] leading-snug"
+          />
+          <Button type="submit" variant="paper" icon={<Send className="size-4" />} disabled={!draft.trim()} aria-label="Send">
+            Send
+          </Button>
+        </div>
+        <p className="mt-1.5 truncate text-[11.5px] text-faint">
+          Snapshot · {context.levels.length} levels · {context.journal.length} journal rows · no model connected
+        </p>
+      </form>
+    </div>
+  )
+}

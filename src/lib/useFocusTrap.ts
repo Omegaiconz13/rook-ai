@@ -1,10 +1,18 @@
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import type { RefObject } from 'react'
 
 const FOCUSABLE = 'a[href],button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])'
 
 /** Traps Tab inside `ref` while `open`, closes on Escape and restores focus on close. */
 export function useFocusTrap(ref: RefObject<HTMLElement | null>, open: boolean, onClose: () => void) {
+  // Callers pass an inline close handler, so its identity changes on nearly every
+  // render. Reading it from a ref keeps the trap tied to `open` alone; otherwise
+  // each parent render re-focuses the first control and yanks focus mid-typing.
+  const close = useRef(onClose)
+  useEffect(() => {
+    close.current = onClose
+  })
+
   useEffect(() => {
     if (!open) return
     const previous = document.activeElement as HTMLElement | null
@@ -14,7 +22,7 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, open: boolean, 
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
-        onClose()
+        close.current()
         return
       }
       if (e.key !== 'Tab' || !el) return
@@ -38,5 +46,5 @@ export function useFocusTrap(ref: RefObject<HTMLElement | null>, open: boolean, 
       document.body.style.overflow = overflow
       previous?.focus?.()
     }
-  }, [open, onClose, ref])
+  }, [open, ref])
 }

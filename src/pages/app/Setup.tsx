@@ -94,6 +94,7 @@ export function SetupPage() {
 
         <BarChart
           bars={bars}
+          symbol={symbol}
           rangeHigh={setup.rangeHighCents}
           rangeLow={setup.rangeLowCents}
           entry={setup.entryCents}

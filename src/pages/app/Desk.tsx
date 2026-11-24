@@ -1,21 +1,18 @@
 import { useMemo, useState } from 'react'
-import { Activity, Clock3, Radar, Search, ShieldAlert, ShieldCheck } from 'lucide-react'
+import { Activity, Radar, Search, ShieldAlert, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '../../components/Badge'
 import { ButtonLink } from '../../components/Button'
 import { Disclaimer } from '../../components/Disclaimer'
 import { EmptyState } from '../../components/EmptyState'
 import { Segmented } from '../../components/Segmented'
-import { SourceBadge } from '../../components/SourceBadge'
 import { StatTile } from '../../components/StatTile'
-import { accountFor, useAccountState, useDeskSession, useJournal, useLastMemo, useLimits } from '../../lib/desk'
+import { accountFor, useAccountState, useJournal, useLastMemo, useLimits } from '../../lib/desk'
 import { Link } from '../../lib/router'
-import { DATA, SESSION_DATE, SESSION_LABEL } from '../../shared/market'
+import { SESSION_DATE } from '../../shared/market'
 import { deskSetups, FAMILY_LABEL, FAMILY_SHORT } from '../../shared/setups'
 import type { SetupFamily, SetupStatus } from '../../shared/setups'
 import { dailyLossCents, money, price } from '../../shared/sizing'
-import { sessionLabel } from '../../shared/time'
-import { AppHeader } from './AppHeader'
 
 const TONE: Record<SetupStatus, 'leaf' | 'amber' | 'neutral'> = { triggered: 'leaf', waiting: 'amber', expired: 'neutral' }
 
@@ -29,15 +26,26 @@ export function DeskPage() {
   const [stored] = useAccountState()
   const [journal] = useJournal()
   const lastMemo = useLastMemo()
-  const { session, simulated } = useDeskSession()
   const [q, setQ] = useState('')
   const [family, setFamily] = useState<'all' | SetupFamily>('all')
 
   const account = accountFor(limits, stored)
-  const today = journal.filter((r) => r.date === SESSION_DATE)
+  // "Checks today" is the gate at work: a trade written down by hand was never checked.
+  const today = journal.filter((r) => r.date === SESSION_DATE && r.source !== 'manual')
   const blocked = today.filter((r) => r.verdict === 'BLOCKED').length
   const riskLeft = dailyLossCents(limits) - Math.max(0, -account.dayPnlCents) - account.riskUsedCents
   const triggered = setups.filter((s) => s.status === 'triggered').length
+  // A PASS does not always mean the setup seat vetoed it: the gate can approve while
+  // the score or another blocking seat stops the memo, and the line must say which.
+  const lastMemoLine = lastMemo
+    ? lastMemo.memo.gate.ruleId
+      ? `blocked at ${lastMemo.memo.gate.ruleId}`
+      : lastMemo.memo.notes.some((note) => note.role === 'setup' && note.verdict === 'block')
+        ? 'setup seat blocked it'
+        : lastMemo.memo.decision === 'PASS'
+          ? 'the case against won'
+          : `${lastMemo.memo.gate.size} shares approved`
+    : ''
 
   const shown = setups.filter((s) => {
     const hit = !q || `${s.symbol} ${FAMILY_LABEL[s.family]}`.toLowerCase().includes(q.toLowerCase())
@@ -46,23 +54,10 @@ export function DeskPage() {
 
   return (
     <>
-      <AppHeader title="Today's desk" lede={`${DATA.real ? 'Market session' : 'Sample session'} · ${SESSION_LABEL}. Levels come from your rules, not a forecast.`}>
-        <div className="flex flex-wrap items-center gap-2">
-          <SourceBadge source="seed" />
-          <Badge tone={session.state === 'open' ? 'leaf' : 'neutral'} icon={<Clock3 aria-hidden className="size-3.5" />}>
-            {sessionLabel(session.state)} · {session.nowEt} NY
-          </Badge>
-        </div>
-      </AppHeader>
+      <h1 className="sr-only">Today's desk</h1>
 
-      <div className="grid gap-7 px-5 py-8 sm:px-8 lg:px-10">
-        {simulated && (
-          <p className="text-[12.5px] text-faint">
-            The live market is closed, or already past the demo entry window, so the desk runs on the session's 10:12 New York clock instead.
-          </p>
-        )}
-
-        <dl className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-7 px-5 py-8 sm:px-8 lg:px-10">
+        <dl className="grid min-w-0 grid-cols-2 gap-3 xl:grid-cols-4">
           <StatTile label="Setups triggered" value={triggered} hint={`${setups.length} in the scan`} icon={Radar} />
           <StatTile label="Checks today" value={today.length} hint="Every check is journaled" icon={Activity} />
           <StatTile label="Blocked" value={blocked} hint="Refusals are the point" icon={ShieldAlert} />
@@ -74,12 +69,7 @@ export function DeskPage() {
             <p className="text-[13.5px] text-soft">
               Last memo · <span className="font-mono">{lastMemo.packet.plan.symbol}</span> ·{' '}
               <span className={lastMemo.memo.decision === 'TAKE' ? 'text-leaf-text' : 'text-danger'}>{lastMemo.memo.decision}</span> ·{' '}
-              {lastMemo.memo.rubricScore}/5 ·{' '}
-              {lastMemo.memo.gate.ruleId
-                ? `blocked at ${lastMemo.memo.gate.ruleId}`
-                : lastMemo.memo.decision === 'PASS'
-                  ? 'setup seat blocked it'
-                  : `${lastMemo.memo.gate.size} shares approved`}
+              {lastMemo.memo.rubricScore}/5 · {lastMemoLine}
             </p>
             <ButtonLink href="/app/room" variant="glass" size="sm" className="h-9">
               Open the room
@@ -102,7 +92,7 @@ export function DeskPage() {
               className="field h-11 pl-11"
             />
           </div>
-          <div className="max-w-full overflow-x-auto">
+          <div className="min-w-0 max-w-full overflow-x-auto">
             <Segmented
               label="Setup family"
               value={family}
@@ -137,7 +127,7 @@ export function DeskPage() {
             }
           />
         ) : (
-          <div className="panel overflow-x-auto rounded-[26px]">
+          <div className="panel min-w-0 overflow-x-auto rounded-[26px] [contain:paint]">
             <table className="w-full min-w-[760px] border-collapse text-[13.5px]">
               <caption className="sr-only">Setups found in this session</caption>
               <thead>

@@ -10,7 +10,7 @@ const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 export function validateEmail(v: unknown): string | null {
   const s = typeof v === 'string' ? v.trim() : ''
   if (!s) return 'Enter your email address.'
-  if (s.length > 200 || !EMAIL.test(s)) return 'Enter a valid email, like you@school.edu.'
+  if (s.length > 200 || !EMAIL.test(s)) return 'Enter a valid email, like you@example.com.'
   return null
 }
 

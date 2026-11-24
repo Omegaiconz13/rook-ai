@@ -204,7 +204,7 @@ entry, stop, target, r_planned, r_result, rules_followed, note, memo_id
 | symbol | string | known instrument |
 | setup | string | family or `manual` |
 | gate_rule | string | `R-xx` or empty when approved |
-| verdict | `APPROVED` | `BLOCKED` |
+| verdict | `APPROVED` | `BLOCKED` | `MANUAL` |
 | took | boolean | false for every blocked row |
 | size | integer | 0 when blocked |
 | entry/stop/target | string | dollars, 2 dp |
@@ -213,6 +213,35 @@ entry, stop, target, r_planned, r_result, rules_followed, note, memo_id
 | rules_followed | boolean | user-set on taken rows, `false` on blocked rows |
 | note | string | ≤ 280 chars |
 | memo_id | string | nullable |
+| tags | string[] | ≤ 8 labels, 24 chars each, case-insensitively deduped |
+| edited_at | string | ISO UTC; null until the reader changes the row |
+| source | `gate` | `manual` |
+
+`tags`, `edited_at` and `source` are stored and exported in the JSON backup but are **not** CSV
+columns: the CSV stays the 17 columns above, in that order, so a spreadsheet written against
+the old header still reads. `MANUAL` means the reader wrote the row by hand — a trade the gate
+never saw — so no report can claim the gate approved it. `source` is `manual` exactly when the
+verdict is `MANUAL`.
+
+## DayNote
+
+One note per session date, kept beside the rows rather than inside them.
+
+| Field | Type | Rules |
+|---|---|---|
+| date | string | `YYYY-MM-DD` (ET session date), unique |
+| note | string | ≤ 2,000 chars, trimmed; an empty note is removed |
+| updatedAt | string | ISO UTC of the last save |
+
+## JournalBundle
+
+The backup file (`rook-journal-<date>.json`): `{ app: 'rook', kind: 'journal', schema: 2,
+exportedAt, rows: JournalRow[], dayNotes: DayNote[] }`. Restoring replaces both lists in this
+browser; a bare array of rows is accepted from an older export. Rows from before `schema: 2`
+are filled forward on read (`migrateJournal`), never rejected.
+
+Storage keys: rows under `desk:v1:journal` (cap 2,000, newest first), day notes under
+`desk:v1:daynotes`.
 
 ## PaperTicket
 

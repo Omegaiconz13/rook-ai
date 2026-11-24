@@ -1,6 +1,18 @@
 @import 'tailwindcss';
 
 /*
+  HeroUI's drawer: the structure and motion from the package, the surface from
+  our tokens (see heroui-drawer-utils). Only the drawer's slice is imported so
+  the rest of HeroUI's component CSS stays out of the bundle.
+*/
+@import '@heroui/styles/base';
+@import '@heroui/styles/themes/default/variables.css';
+@import '@heroui/styles/utilities';
+@import '@heroui/styles/variants';
+@import '@heroui/styles/components/drawer.css' layer(components);
+@import './components/ui/heroui-drawer-utils/index.css';
+
+/*
   Rook design tokens. A near-black canvas tinted green, one neon-leaf
   accent, frosted-glass panels and white pill actions. Every colour, radius,
   shadow and motion value the components use lives here.
@@ -17,6 +29,10 @@
   --color-raised: #17251b;
   --color-line: rgb(190 255 200 / 0.09);
   --color-line-strong: rgb(190 255 200 / 0.18);
+  /* Data and ambience: the chart's range levels and the hero's light. */
+  --color-level-range: rgb(207 219 209 / 0.55);
+  --color-glow-soft: rgb(47 194 76 / 0.55);
+  --color-glow-faint: rgb(47 194 76 / 0.18);
 
   --color-fg: #eef4ee;
   --color-soft: #cfdbd1;
@@ -47,6 +63,17 @@
   --shadow-float: 0 30px 80px -24px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(190 255 200 / 0.07);
   --shadow-glow: 0 12px 40px -12px rgb(126 224 104 / 0.6);
   --shadow-button: 0 18px 40px -16px rgb(0 0 0 / 0.75), 0 1px 0 rgb(255 255 255 / 0.9) inset;
+
+  /* Keys the HeroUI drawer asks for; each one resolves to a Rook surface. */
+  --color-background: #050906;
+  --color-foreground: #eef4ee;
+  --color-overlay: #0c150f;
+  --color-backdrop: rgb(5 9 6 / 0.72);
+  --color-separator: rgb(190 255 200 / 0.16);
+  --color-focus: #7ee068;
+  --shadow-overlay: 0 30px 80px -24px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(190 255 200 / 0.07);
+  --ease-smooth: ease;
+  --ease-out-quart: cubic-bezier(0.165, 0.84, 0.44, 1);
 
   --ease-brand: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-swing: cubic-bezier(0.65, 0, 0.35, 1);
@@ -172,6 +199,8 @@
   .btn-md { height: 44px; padding: 0 20px; font-size: 14px; }
   .btn-lg { height: 56px; padding: 0 28px; font-size: 16px; }
   .btn-xl { height: 64px; padding: 0 36px; font-size: 17px; border-radius: 22px; }
+  /* Icon-only controls keep a 44px target whatever size they are drawn at. */
+  .btn-icon { min-width: 44px; min-height: 44px; }
 
   .btn-paper { background: var(--color-paper); color: var(--color-ink); box-shadow: var(--shadow-button); }
   .btn-paper:hover:not(:disabled), .btn-paper[data-force='hover'] { background: #ffffff; box-shadow: var(--shadow-button), 0 0 0 6px rgb(126 224 104 / 0.12); }
@@ -204,6 +233,27 @@
     border: 1px solid var(--color-line);
     box-shadow: var(--shadow-card);
   }
+
+  /* The one modal and drawer scrim, from the backdrop token. */
+  .scrim { background: var(--color-backdrop); }
+
+  /* Off-screen until focused: the first stop for keyboard users. */
+  .skip-link {
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 100;
+    padding: 12px 20px;
+    border-radius: var(--radius-pill);
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-size: 14px;
+    font-weight: 500;
+    transform: translateY(-200%);
+    transition: transform var(--duration-fast) var(--ease-brand);
+  }
+  .skip-link:focus,
+  .skip-link:focus-visible { transform: none; }
 
   .field {
     width: 100%;
@@ -256,6 +306,12 @@
   .flip[data-flipped='true'] { transform: rotateY(180deg); }
   .flip-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
   .flip-back { transform: rotateY(180deg); }
+}
+
+/* Coarse pointers get the 44px target even where the control is drawn smaller. */
+@media (pointer: coarse) {
+  .btn-sm { min-height: 44px; }
+  .tap-target { min-width: 44px; min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

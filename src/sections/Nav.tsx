@@ -39,7 +39,7 @@ export function Nav({ overlay = false }: { overlay?: boolean }) {
               <ButtonLink href="/login" variant="tint" size="sm" className="h-10 px-5">
                 Log In
               </ButtonLink>
-              <ButtonLink href="/signup" variant="glass" size="sm" className="h-10 px-5">
+              <ButtonLink href="/signup" variant="paper" size="sm" className="h-10 px-5">
                 Sign Up
               </ButtonLink>
             </>
@@ -53,7 +53,7 @@ export function Nav({ overlay = false }: { overlay?: boolean }) {
 
       {open && (
         <div className="fixed inset-0 z-50 md:hidden">
-          <div aria-hidden className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div aria-hidden className="scrim absolute inset-0 backdrop-blur-sm" onClick={() => setOpen(false)} />
           <div ref={drawer} id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu" className="absolute inset-y-0 right-0 flex w-[min(340px,88vw)] animate-pop flex-col gap-2 border-l border-line bg-panel p-5">
             <div className="mb-4 flex items-center justify-between">
               <Logo withName />
