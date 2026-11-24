@@ -1,7 +1,27 @@
 # Ninth Harness — architecture, routing, tools and workflow
 
-Status: proposed, nothing implemented. Grounded in `specs/research/2026-11-24-minara-system-research.md`.
+Status: **implemented** through B6. Grounded in `specs/research/2026-11-24-minara-system-research.md`.
 Supersedes nothing; B1 (`0f22925`) already made Ninth the desk's only assistant.
+
+### Where it stands (2026-11-24)
+
+| Phase | State | Proof |
+| --- | --- | --- |
+| B1 | shipped | one assistant, `/app/chat` and the docked panel, same component |
+| B2 | shipped `0021196`…`7b331a9` | 17 tools, router, gate, prompt, loop, audit; 179 existing tests untouched |
+| B3 | shipped `90ff6d0`, `94c9f5a`, `9209c75` | fact → next prompt; unproven label below ten uses; `/trace` reads `trace_id` + `blocked` |
+| B4 | **built, not proven live** `37f0c58` | adapter, route and client tested against recorded frames and a fake provider; **no key has been set**, so no real model turn has run |
+| B5 | shipped `83e4b52` | `/review` over four fixed roles, `/draft` to Pine + `simulate`; both refuse when the rule did not fire |
+| B6 | shipped `81e32da` | a stored line fires once, is stamped, and has no path to a ticket |
+
+Checks at that commit: `bun run typecheck`, `bun test` (420 pass), `bun run build`, and the
+routes exercised through `wrangler`/workerd in `vite dev` — `/api/ninth/model` reporting
+`configured:false`, `/api/ninth/turn` answering 503, a foreign Origin answering 403.
+
+One risk is recorded and unresolved: `POST /api/ninth/turn` has no authentication, so on a
+public deployment anyone who can reach the site can spend the key. Same-origin checking
+and size caps narrow it; the fix is Sign in with Freebuff on the route, or keeping the
+route out of a published build.
 
 ## 1. The goal in one paragraph
 
@@ -400,8 +420,10 @@ did not fire.
 
 ## 14. Open questions for the owner
 
-1. **Provider.** Which model provider and key? It must arrive as a Worker secret; nothing
-   else works in this deployment. Until then B2 and B3 are fully buildable and B4 is blocked.
+1. **Provider.** Which model provider and key? It must arrive as a Worker secret
+   (`MODEL_API_KEY`, plus `MODEL_NAME` and `MODEL_BASE_URL` if not OpenAI); nothing else works
+   in this deployment. The route is built and the offline path is the default, so a key is now
+   the only missing piece of B4 — and the answer to the auth question above.
 2. **Approval posture.** Confirm *every* write (default in this plan), or confirm-once per
    session for journal appends and memory writes? The plan takes the stricter option.
 3. **How far to go on Review.** Four fixed roles (proposed) or a configurable pipeline
