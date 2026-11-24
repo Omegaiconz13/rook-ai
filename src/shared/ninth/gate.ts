@@ -156,7 +156,9 @@ export function noteVerdict(state: GateState, verdict: { planId: string; ruleId:
 
 /** The shape a blocked call takes back to the model: a tool-shaped error, not a throw. */
 export function blockedOutcome(block: GateBlock): ToolOutcome {
-  return fail(block.why, ['gate'], block.code)
+  const outcome = fail(block.why, ['gate'], block.code)
+  if (outcome.ok) return outcome
+  return block.token ? { ...outcome, pending: { token: block.token } } : outcome
 }
 
 /** The hook `dispatch` accepts, bound to one turn's gate state. */

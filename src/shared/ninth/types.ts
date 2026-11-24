@@ -1,6 +1,6 @@
 import type { ChartBar } from '../chartfeed'
 import type { JournalRow } from '../journal'
-import type { Account, RiskLimits, SessionInfo } from '../risk'
+import type { Account, GateVerdict, RiskLimits, SessionInfo } from '../risk'
 import type { Setup } from '../setups'
 import type { PaperTicket } from '../ticket'
 
@@ -53,7 +53,7 @@ export type Args = Record<string, unknown>
  */
 export type ToolOutcome =
   | { ok: true; data: Record<string, unknown>; refs: string[] }
-  | { ok: false; why: string; refs: string[]; blocked?: string }
+  | { ok: false; why: string; refs: string[]; blocked?: string; pending?: { token: string } }
 
 export type ToolEntry = {
   name: string
@@ -87,6 +87,8 @@ export type DeskSnapshot = {
   tickets: PaperTicket[]
   /** Tickets confirmed today, as the duplicate rule counts them. */
   confirmed: { symbol: string; sessionDate: string }[]
+  /** The gate's verdict on the setup the chart shows, or null when no rule fired. */
+  gate: GateVerdict | null
   limits: RiskLimits
   account: Account
   session: SessionInfo

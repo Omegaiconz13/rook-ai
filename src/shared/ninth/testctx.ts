@@ -2,8 +2,9 @@ import { chartHistory } from '../chartfeed'
 import { barsFor, dailyFor } from '../fixtures'
 import type { JournalRow } from '../journal'
 import { SESSION_DATE } from '../market'
+import { checkPlan } from '../risk'
 import type { RiskLimits } from '../risk'
-import { setupsFor } from '../setups'
+import { planFromSetup, setupsFor } from '../setups'
 import type { DeskSnapshot, TurnContext } from './types'
 
 /*
@@ -55,6 +56,32 @@ export function journalRow(over: Partial<JournalRow> = {}): JournalRow {
 export function testContext(over: Partial<DeskSnapshot> = {}): TurnContext {
   const symbol = over.symbol ?? 'TSLA'
   const timeframe = over.timeframe ?? '5'
+  const limits = over.limits ?? TEST_LIMITS
+  const account =
+    over.account ?? {
+      equityCents: limits.equityCents,
+      dayPnlCents: 0,
+      tradesToday: 1,
+      riskUsedCents: 0,
+      killSwitch: false,
+      sessionDate: SESSION_DATE,
+    }
+  const session = over.session ?? { state: 'open', nowEt: '10:12' }
+  const setups = over.setups ?? setupsFor(symbol, barsFor(symbol), dailyFor(symbol))
+  const active = setups.find((setup) => setup.status === 'triggered') ?? setups[0]
+  const gate =
+    over.gate !== undefined
+      ? over.gate
+      : active
+        ? checkPlan({
+            plan: planFromSetup(active),
+            limits,
+            account: { ...account, equityCents: limits.equityCents },
+            session,
+            history: [],
+          })
+        : null
+
   const desk: DeskSnapshot = {
     symbol,
     timeframe,
@@ -68,21 +95,14 @@ export function testContext(over: Partial<DeskSnapshot> = {}): TurnContext {
         { label: 'stop', priceCents: 38_832 },
         { label: 'target', priceCents: 40_254 },
       ],
-    setups: over.setups ?? setupsFor(symbol, barsFor(symbol), dailyFor(symbol)),
+    setups,
     journal: over.journal ?? [],
     tickets: over.tickets ?? [],
     confirmed: over.confirmed ?? [],
-    limits: over.limits ?? TEST_LIMITS,
-    account:
-      over.account ?? {
-        equityCents: TEST_LIMITS.equityCents,
-        dayPnlCents: 0,
-        tradesToday: 1,
-        riskUsedCents: 0,
-        killSwitch: false,
-        sessionDate: SESSION_DATE,
-      },
-    session: over.session ?? { state: 'open', nowEt: '10:12' },
+    gate,
+    limits,
+    account,
+    session,
     simulated: over.simulated ?? true,
     today: over.today ?? SESSION_DATE,
   }
