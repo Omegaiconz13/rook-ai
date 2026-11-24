@@ -9,3 +9,6 @@ __pycache__
 .DS_Store
 *.log
 /freebuff-sites-build/
+
+# transport bundles, never committed
+*.bundle
