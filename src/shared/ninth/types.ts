@@ -21,6 +21,9 @@ export const SKILL_BODY_BUDGET_CHARS = 12_000
 export const MAX_LEARNINGS = 3
 export const AUDIT_MAX_ROWS = 500
 
+/** Why a turn stopped, in the order the loop checks them. */
+export type StopReason = 'done' | 'steps' | 'tokens' | 'pending' | 'blocked-twice'
+
 /** 1 read · 2 confirm once per session · 3 confirm each · 4 a person, never a model. */
 export type Tier = 1 | 2 | 3 | 4
 
