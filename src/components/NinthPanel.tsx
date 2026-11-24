@@ -192,7 +192,7 @@ export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
               ))}
             </div>
             <p className="text-[12.5px] text-faint">
-              Commands: /review (four read-only roles) · /draft (Pine + replay) · /memory (list, add, forget) · /trace (last turn)
+              Commands: /review (four read-only roles) · /draft (Pine + replay) · /watch (price line) · /memory (list, add, forget) · /trace (last turn)
             </p>
           </div>
         ) : (

@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { deterministicModel } from '../shared/ninth/answer'
 import { appendAudit } from '../shared/ninth/audit'
@@ -10,6 +10,9 @@ import { runTurn } from '../shared/ninth/loop'
 import { emptyWorkspace, MEMORY_KEEP } from '../shared/ninth/memory'
 import type { Learning, MemorySnapshot, Observation, Workspace } from '../shared/ninth/memory'
 import type { DeskSnapshot, MemoryPorts, Tier } from '../shared/ninth/types'
+import { checkWatches, watchMessage } from '../shared/ninth/watch'
+import type { Quote, Watch } from '../shared/ninth/watch'
+import { barsFor } from '../shared/fixtures'
 import { readStore, writeStore } from './storage'
 
 /*
@@ -30,6 +33,7 @@ export const NINTH_KEYS = {
   workspace: 'v1:ninth:workspace',
   observations: 'v1:ninth:memory',
   learnings: 'v1:ninth:learnings',
+  watch: 'v1:ninth:watch',
 } as const
 
 export type NinthToolTrace = {
@@ -57,6 +61,18 @@ export type NinthMessage = {
 
 export function readAudit(): AuditRow[] {
   return readStore<AuditRow[]>(NINTH_KEYS.audit, [])
+}
+
+export function readWatches(): Watch[] {
+  return readStore<Watch[]>(NINTH_KEYS.watch, [])
+}
+
+/** The last bar the desk has for a symbol, in cents, as `get_quote` reads it. */
+function quoteFor(symbol: string): Quote | undefined {
+  const bars = barsFor(symbol)
+  const last = bars[bars.length - 1]
+  if (!last) return undefined
+  return { symbol, lastCents: last.close, highCents: last.high, lowCents: last.low }
 }
 
 export function readMemory(): MemorySnapshot {
@@ -133,6 +149,32 @@ export function useNinth(desk: DeskSnapshot) {
 
   const clear = useCallback(() => setMessages([]), [])
 
+  /*
+    Watches are checked once, when the desk loads. Each one that reached its line
+    produces exactly one message and is stamped, so a reload cannot repeat it —
+    and nothing here can size, journal or trade.
+  */
+  useEffect(() => {
+    const stored = readWatches()
+    if (stored.length === 0) return
+    const quotes = stored.map((watch) => quoteFor(watch.symbol)).filter((quote): quote is Quote => quote !== undefined)
+    const { watches, fired } = checkWatches(stored, quotes, new Date().toISOString())
+    if (fired.length === 0) return
+    writeStore(NINTH_KEYS.watch, watches)
+    setMessages((prev) => [
+      ...prev,
+      ...fired.map((watch) => {
+        const quote = quotes.find((entry) => entry.symbol === watch.symbol) as Quote
+        return {
+          id: crypto.randomUUID(),
+          from: 'ninth' as const,
+          text: watchMessage(watch, quote),
+          refs: [`watch:${watch.symbol}`, `quote:${watch.symbol}`],
+        }
+      }),
+    ])
+  }, [])
+
   /** A command's answer, appended without running a turn. */
   const append = useCallback((question: string, text: string, refs: string[]) => {
     const id = crypto.randomUUID()
@@ -148,9 +190,16 @@ export function useNinth(desk: DeskSnapshot) {
     if (!text) return
     const snapshot = deskRef.current
 
-    const command = runCommand(text, { memory: readMemory(), audit: readAudit(), desk: snapshot, today: snapshot.today })
+    const command = runCommand(text, {
+      memory: readMemory(),
+      audit: readAudit(),
+      desk: snapshot,
+      watches: readWatches(),
+      today: snapshot.today,
+    })
     if (command.handled) {
       if (command.workspace) writeStore(NINTH_KEYS.workspace, command.workspace)
+      if (command.watches) writeStore(NINTH_KEYS.watch, command.watches)
       append(text, command.text, command.refs)
       return
     }

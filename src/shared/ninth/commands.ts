@@ -5,7 +5,10 @@ import { learningProof } from './learning'
 import { addWorkspaceLine, removeWorkspaceLine, workspaceLines } from './memory'
 import type { MemorySnapshot, Workspace } from './memory'
 import { reviewSetup, reviewText } from './review'
+import { price } from '../sizing'
 import type { DeskSnapshot } from './types'
+import { addWatch, parseWatch, removeWatches, watchText } from './watch'
+import type { Watch } from './watch'
 
 /*
   The commands that need no model and no turn: `/memory`, `/trace`, `/review` and
@@ -20,14 +23,16 @@ export type CommandState = {
   audit: AuditRow[]
   /** The desk as the panel sees it; `/review` and `/draft` read it. */
   desk: DeskSnapshot
+  /** The stored price watches; `/watch` lists, adds and removes them. */
+  watches: Watch[]
   today: string
 }
 
 export type CommandOutcome =
   | { handled: false }
-  | { handled: true; text: string; refs: string[]; workspace?: Workspace }
+  | { handled: true; text: string; refs: string[]; workspace?: Workspace; watches?: Watch[] }
 
-export const COMMANDS = ['/memory', '/trace', '/review', '/draft'] as const
+export const COMMANDS = ['/memory', '/trace', '/review', '/draft', '/watch'] as const
 
 export function runCommand(question: string, state: CommandState): CommandOutcome {
   const text = question.trim()
@@ -41,6 +46,7 @@ export function runCommand(question: string, state: CommandState): CommandOutcom
   if (command === '/trace') return traceCommand(state.audit)
   if (command === '/review') return reviewCommand(argument, state.desk)
   if (command === '/draft') return draftCommand(argument, state.desk)
+  if (command === '/watch') return watchCommand(argument, state)
   return { handled: true, text: `Commands: ${COMMANDS.join(' · ')}.`, refs: [] }
 }
 
@@ -50,6 +56,48 @@ function reviewCommand(argument: string, desk: DeskSnapshot): CommandOutcome {
   return outcome.ok
     ? { handled: true, text: reviewText(outcome.record), refs: outcome.record.refs }
     : { handled: true, text: outcome.why, refs: outcome.refs }
+}
+
+/** `/watch` — list, add, remove. A watch only tells the reader a level was reached. */
+function watchCommand(argument: string, state: CommandState): CommandOutcome {
+  if (!argument) return { handled: true, text: watchText(state.watches), refs: ['watch'] }
+
+  if (/^clear$/i.test(argument)) {
+    return {
+      handled: true,
+      text: state.watches.length === 0 ? 'There was nothing to clear.' : `Cleared ${state.watches.length} ${state.watches.length === 1 ? 'watch' : 'watches'}.`,
+      refs: ['watch'],
+      watches: state.watches.length === 0 ? undefined : [],
+    }
+  }
+
+  const remove = /^(remove|forget)\s+(.+)$/i.exec(argument)
+  if (remove) {
+    const { watches, removed } = removeWatches(state.watches, remove[2])
+    return {
+      handled: true,
+      text:
+        removed > 0
+          ? `Removed ${removed} ${removed === 1 ? 'watch' : 'watches'}.`
+          : `No watch matches "${remove[2].trim()}". /watch lists them with their ids.`,
+      refs: ['watch'],
+      watches: removed > 0 ? watches : undefined,
+    }
+  }
+
+  const parsed = parseWatch(argument, new Date().toISOString(), () => crypto.randomUUID())
+  if (!parsed.watch) return { handled: true, text: parsed.why as string, refs: ['watch'] }
+
+  const next = addWatch(state.watches, parsed.watch)
+  const added = next.length > state.watches.length
+  return {
+    handled: true,
+    text: added
+      ? `Watching ${parsed.watch.symbol} ${parsed.watch.kind} ${price(parsed.watch.priceCents)}. It is checked when the desk loads, and it cannot trade.`
+      : 'That watch is already set.',
+    refs: [`watch:${parsed.watch.symbol}`],
+    watches: added ? next : undefined,
+  }
 }
 
 /** `/draft <symbol> <rule>` — a Pine draft, then the desk's replay of the same rule. */

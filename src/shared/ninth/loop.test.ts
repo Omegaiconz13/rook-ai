@@ -205,6 +205,7 @@ describe('memory in a turn', () => {
       memory: emptyMemory(),
       audit: [],
       desk: base.desk,
+      watches: [],
       today: '2026-11-19',
     })
     if (!added.handled || !added.workspace) throw new Error('expected a workspace')

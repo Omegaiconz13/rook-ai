@@ -11,6 +11,7 @@ const state = (over: Partial<CommandState> = {}): CommandState => ({
   memory: emptyMemory(),
   audit: [],
   desk: testContext().desk,
+  watches: [],
   today: '2026-11-19',
   ...over,
 })
@@ -65,7 +66,7 @@ describe('commands', () => {
   })
 
   test('lists the commands it knows for an unknown one', () => {
-    expect(text(runCommand('/chart', state()))).toContain('/memory · /trace · /review · /draft')
+    expect(text(runCommand('/chart', state()))).toContain('/memory · /trace · /review · /draft · /watch')
   })
 })
 
@@ -80,6 +81,46 @@ describe('/review', () => {
   test('takes a setup id as its argument, and refuses one that did not fire', () => {
     expect(text(runCommand('/review TSLA-orb', state()))).toContain('nothing to review')
     expect(text(runCommand('/review TSLA-reclaim', state()))).toContain('Review — TSLA')
+  })
+})
+
+describe('/watch', () => {
+  test('lists nothing to watch without inventing a line', () => {
+    expect(text(runCommand('/watch', state()))).toContain('No watches')
+  })
+
+  test('stores a line and says what it can and cannot do', () => {
+    const outcome = runCommand('/watch TSLA above 400', state())
+    if (!outcome.handled) throw new Error('expected a command')
+    expect(outcome.watches).toHaveLength(1)
+    expect(outcome.watches?.[0].priceCents).toBe(40_000)
+    expect(outcome.text).toContain('Watching TSLA above 400.00')
+    expect(outcome.text).toContain('cannot trade')
+  })
+
+  test('sets the same line once', () => {
+    const first = runCommand('/watch TSLA above 400', state())
+    if (!first.handled || !first.watches) throw new Error('expected a watch')
+    const again = runCommand('/watch TSLA above 400', state({ watches: first.watches }))
+    expect(text(again)).toContain('already set')
+  })
+
+  test('removes one by symbol and all of them on clear', () => {
+    const added = runCommand('/watch NVDA below 100', state())
+    if (!added.handled || !added.watches) throw new Error('expected a watch')
+    const removed = runCommand('/watch remove NVDA', state({ watches: added.watches }))
+    if (!removed.handled) throw new Error('expected a command')
+    expect(removed.watches).toEqual([])
+    expect(removed.text).toBe('Removed 1 watch.')
+
+    const cleared = runCommand('/watch clear', state({ watches: added.watches }))
+    if (!cleared.handled) throw new Error('expected a command')
+    expect(cleared.watches).toEqual([])
+    expect(cleared.text).toContain('Cleared 1 watch')
+  })
+
+  test('refuses a ticker the desk does not trade', () => {
+    expect(text(runCommand('/watch IBM above 10', state()))).toContain('IBM is not on the desk')
   })
 })
 
