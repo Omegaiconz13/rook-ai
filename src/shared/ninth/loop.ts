@@ -1,5 +1,5 @@
 import type { AuditRow, AuditStatus } from './audit'
-import { gateGuard, openGate } from './gate'
+import { gateGuard, noteWrite, openGate } from './gate'
 import type { GateState } from './gate'
 import { reviewTurn, sameQuestion } from './learning'
 import type { Review } from './learning'
@@ -168,6 +168,8 @@ export async function runTurn(args: {
       messages.push({ role: 'tool', id: call.id, name: call.name, result: resultText(outcome) })
 
       if (outcome.ok) {
+        // Only a write that actually ran counts against the turn's cap.
+        if (entry?.set === 'write') noteWrite(gate)
         emit({ t: 'tool', name: call.name, tier, status: 'ok', ms })
         pushRefs(refs, outcome.refs)
         rows.push(row({ kind: 'tool', status: 'ok', tool: call.name, tier, ms, refs: [...outcome.refs] }))

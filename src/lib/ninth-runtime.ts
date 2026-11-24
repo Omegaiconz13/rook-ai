@@ -13,6 +13,7 @@ import type { DeskSnapshot, MemoryPorts, Tier } from '../shared/ninth/types'
 import { checkWatches, watchMessage } from '../shared/ninth/watch'
 import type { Quote, Watch } from '../shared/ninth/watch'
 import { barsFor } from '../shared/fixtures'
+import { appendJournal, readJournal } from './desk'
 import { modelStatus, remoteModel } from './ninth-client'
 import { readStore, writeStore } from './storage'
 
@@ -105,6 +106,24 @@ function saveAudit(rows: AuditRow[]): void {
 /** The ports a tool asks through. They own the keys, the clock and the dedupe. */
 function memoryPorts(session: string): MemoryPorts {
   return {
+    appendJournal: (row) => {
+      // A confirmed retry must not become a second row with a new id.
+      const same = readJournal().find(
+        (existing) =>
+          existing.date === row.date &&
+          existing.symbol === row.symbol &&
+          existing.setup === row.setup &&
+          existing.entry === row.entry &&
+          existing.stop === row.stop &&
+          existing.target === row.target &&
+          existing.source === row.source,
+      )
+      if (same) {
+        return { ok: false, why: `That row is already in the journal (${same.tradeId}), so nothing was written twice.` }
+      }
+      appendJournal(row)
+      return { ok: true, tradeId: row.tradeId }
+    },
     remember: ({ section, text }) => {
       const current = readMemory()
       if (current.observations.some((observation) => observation.text.toLowerCase() === text.toLowerCase())) {

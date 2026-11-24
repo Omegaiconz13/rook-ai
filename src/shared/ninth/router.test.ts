@@ -160,7 +160,12 @@ describe('allowedTools', () => {
     expect(tools).toContain('route_why')
     expect(tools).not.toContain('activate_skills')
     expect(tools).not.toContain('ask_user')
-    expect(tools).not.toContain('journal_append')
+  })
+
+  test('offers the journal’s read and its write to a journal question', () => {
+    const tools = allowedTools(ask('what did I journal today?'))
+    expect(tools).toContain('read_journal')
+    expect(tools).toContain('journal_append')
   })
 
   test('finds every skill by id', () => {

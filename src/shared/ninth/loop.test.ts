@@ -7,6 +7,7 @@ import type { Model, ModelCallInput, ModelReply, TurnEvent } from './loop'
 import { runCommand } from './commands'
 import { runTurn } from './loop'
 import { emptyMemory } from './memory'
+import type { ObservationSection } from './memory'
 import type { MemorySnapshot } from './memory'
 import { testContext } from './testctx'
 import { MAX_INPUT_CHARS, MAX_STEPS, MAX_TOKENS_OUT } from './types'
@@ -31,6 +32,7 @@ const collect = () => {
 }
 
 const rowOf = (rows: AuditRow[], kind: AuditRow['kind']): AuditRow | undefined => rows.find((row) => row.kind === kind)
+
 
 describe('a turn', () => {
   test('routes, answers, prints its refs and stops', async () => {
@@ -252,5 +254,27 @@ describe('the deterministic client', () => {
     const result = await runTurn({ question: 'what is the price?', ctx, model: deterministicModel(ctx.desk) })
     expect(result.text).toContain('379.42')
     expect(result.refs).toContain('chart:TSLA:5m')
+  })
+})
+
+describe('the write cap', () => {
+  test('lets a turn write three times and refuses the fourth', async () => {
+    const written: string[] = []
+    const ctx = {
+      ...testContext(),
+      ports: {
+        remember: (observation: { section: ObservationSection; text: string }) => {
+          written.push(observation.text)
+          return { ok: true as const, id: `o-${written.length}` }
+        },
+      },
+    }
+    const calls = [1, 2, 3, 4].map((n) => ({ id: `c${n}`, name: 'memory_write', args: { text: `line ${n}` } }))
+    const model = fakeModel([{ calls }, { text: 'Three lines kept.' }])
+    const gate = openGate({ traceId: 'trace-test', killSwitch: false, confirmed: ['memory_write'] })
+    const result = await runTurn({ question: 'remember these', ctx, model, gate })
+
+    expect(written).toEqual(['line 1', 'line 2', 'line 3'])
+    expect(result.audit.filter((row) => row.blocked === 'write-cap')).toHaveLength(1)
   })
 })

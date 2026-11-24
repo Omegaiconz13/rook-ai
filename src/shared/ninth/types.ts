@@ -104,14 +104,19 @@ export type DeskSnapshot = {
 
 export type RememberResult = { ok: true; id: string } | { ok: false; why: string }
 
+/** A row the runtime accepted, named by the id the journal will show. */
+export type JournalResult = { ok: true; tradeId: string } | { ok: false; why: string }
+
 /**
  * The writes a tool may ask for. The runtime owns storage and the clock, so a
  * tool never touches a store itself: it asks, and the answer is the result the
- * model sees.
+ * model sees. A missing port is a refusal, never a silent success.
  */
 export type MemoryPorts = {
   remember?: (observation: { section: ObservationSection; text: string }) => RememberResult
   saveLearning?: (learning: { trigger: string; sequence: string[]; guidance: string }) => RememberResult
+  /** Append one journal row; the runtime owns the key and the duplicate check. */
+  appendJournal?: (row: JournalRow) => JournalResult
 }
 
 export type TurnContext = {

@@ -13,6 +13,7 @@ Supersedes nothing; B1 (`0f22925`) already made Ninth the desk's only assistant.
 | B4 | **built, not proven live** `37f0c58` | adapter, route and client tested against recorded frames and a fake provider; **no key has been set**, so no real model turn has run |
 | B5 | shipped `83e4b52` | `/review` over four fixed roles, `/draft` to Pine + `simulate`; both refuse when the rule did not fire |
 | B6 | shipped `81e32da` | a stored line fires once, is stamped, and has no path to a ticket |
+| B2 follow-on | `journal_append` shipped | tier 3, one row built by `rowFromVerdict`/`manualRow` and stored through a runtime port; refused for a setup the rule did not trigger |
 
 Checks at that commit: `bun run typecheck`, `bun test` (420 pass), `bun run build`, and the
 routes exercised through `wrangler`/workerd in `vite dev` — `/api/ninth/model` reporting
@@ -22,6 +23,13 @@ One risk is recorded and unresolved: `POST /api/ninth/turn` has no authenticatio
 public deployment anyone who can reach the site can spend the key. Same-origin checking
 and size caps narrow it; the fix is Sign in with Freebuff on the route, or keeping the
 route out of a published build.
+
+One gap found while testing `journal_append` (2026-11-24) and left open: `gate_check`
+approves a setup the rule marks `expired` (`TSLA-orb` under the test limits), because
+`checkPlan` is handed a plan's prices and never the setup's status. Review, Draft and now
+`journal_append` all refuse an expired setup; the gate itself still answers approved. The
+fix belongs in `checkPlan` or in the caller that builds the plan, and would change every
+golden verdict, so it is recorded here rather than made in passing.
 
 ## 1. The goal in one paragraph
 
