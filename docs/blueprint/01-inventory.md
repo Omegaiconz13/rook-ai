@@ -84,18 +84,27 @@ component. That discipline is currently kept by habit, and habit is not a guaran
 
 ## The five findings that motivate this blueprint
 
-### F1 — HeroUI ships 708 kB for a page nobody visits
+### F1 — HeroUI costs 134 kB of JS and 39 kB of CSS for one drawer  *(fixed, measured)*
 
-Evidence: `@heroui/react` is imported by exactly one file, `src/components/ui/heroui-drawer.tsx`,
-which is imported only by `src/components/ui/demo.tsx` and `src/components/ui/sidebar-nav.tsx`, and
-`demo.tsx` is imported only by `Styleguide.tsx`. Build output: `Button-D5v_GNEt.js` = **708.15 kB
-(281.51 kB gzip)** — the largest single first-party chunk in the app.
+Evidence: `@heroui/react` was imported by exactly one file, `src/components/ui/heroui-drawer.tsx`,
+which was imported by `src/components/ui/demo.tsx` and `src/components/ui/sidebar-nav.tsx`; `demo.tsx`
+was imported only by `Styleguide.tsx`. `heroui-drawer-utils/index.css` was imported by **one** file
+(`styles.css`), not zero as first recorded.
 
-Meanwhile the repo already has its own `src/components/Modal.tsx` (used by 7 files) and
-`heroui-drawer-utils/index.css` is imported by **zero** files.
+**The 708 kB figure was wrong.** That chunk is `@luxalgo/vela/workspace`, pulled in by `BarChart.tsx`
+and sharing a Rollup chunk with `Button.tsx`; it does not shrink when HeroUI leaves. The measured cost
+of the dependency, from a clean build of this commit versus its parent:
 
-**Action:** delete the HeroUI chain, drop `@heroui/react` + `@heroui/styles`, rebuild the styleguide
-drawer demo on `Modal`. Removes 708 kB from the graph and one whole styling dependency.
+| | Before | After | Δ |
+|---|---|---|---|
+| JS, all chunks | 3,884,786 B | 3,750,625 B | **−134,161 B** (`use-overlay-state-*.js` disappears) |
+| CSS | 100,875 B (16.57 kB gzip) | 61,539 B (12.43 kB gzip) | **−39,336 B raw, −4.14 kB gzip** |
+| `dist/client` | 4.2 MB | 4.1 MB | −0.1 MB |
+
+**Action taken:** deleted `heroui-drawer.tsx`, `heroui-drawer-utils/`, the five `@import`s and the two
+dependencies; wrote `src/components/Drawer.tsx` on our own tokens (portal, focus trap, Escape, scrim,
+scroll lock owned by one hook) and rebuilt both `NavDrawer` and the styleguide demo on it.
+`sidebar-nav.tsx` was **kept and rewritten**, not deleted — it is the desk's real rail.
 
 ### F2 — Two copies of the vendored skill pack
 
@@ -147,7 +156,7 @@ puts both under Phase 3 with exit criteria, so they stop being invisible.
 | Config naming mismatch | `wrangler.jsonc` name `rook-desk`; `deploy.json` module path `dist/rook_desk/index.js`; `postbuild.mjs` asserts they agree | A rename in one place fails the deploy *after* a successful build. Already guarded by a good error message — keep it, and document the pair. |
 | Two "ninth panel" files | `src/components/NinthPanel.tsx` (291 lines, the UI) and `src/lib/ninth-panel.tsx` (87 lines, the Vela plugin registration) | Not duplication, but the names read as one. Rename the plugin to `vela-ninth-plugin.tsx`. |
 | Demo auth is unlabelled in code | `POST /api/login` fabricates a name from the email and returns `level: '1–2 years'` | Acceptable for a demo, must be visibly labelled and must not sit behind a pricing page that implies purchase. |
-| Public styleguide | route `/styleguide` in the production table | Ships a design-system page to strangers. Keep it — it is a credibility artefact — but it must not carry the only use of a 708 kB dep (F1). |
+| Public styleguide | route `/styleguide` in the production table | Ships a design-system page to strangers. Keep it — it is a credibility artefact — but it must not be the only consumer of a dependency. |
 | No layer enforcement | layering holds by convention | One import away from a React dependency inside `shared/`, which would break the Worker build. |
 
 ## What is genuinely strong, and must not be redesigned

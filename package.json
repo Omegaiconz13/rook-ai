@@ -11,8 +11,6 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@heroui/react": "3.2.8",
-    "@heroui/styles": "3.2.8",
     "@luxalgo/vela": "^0.10.14",
     "@luxalgo/vela-pinets": "^0.3.4",
     "hono": "^4.13.0",

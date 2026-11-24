@@ -370,8 +370,8 @@ export function Styleguide() {
         <div className="flex flex-wrap items-center gap-4">
           <Navigation />
           <p className="text-[13px] text-muted">
-            HeroUI's drawer (<code className="font-mono text-[12px]">src/components/ui/heroui-drawer.tsx</code>) with our surface tokens. On the desk it
-            becomes the phone menu; the rail at{' '}
+            <code className="font-mono text-[12px]">src/components/Drawer.tsx</code> — the same left sheet the desk uses as its phone menu:
+            focus trapped, Escape and the scrim close it, focus returns to the opener. The rail at{' '}
             <code className="font-mono text-[12px]">/app</code> opens on hover and collapses to icons when you pick a page.
           </p>
         </div>

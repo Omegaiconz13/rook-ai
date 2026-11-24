@@ -33,7 +33,7 @@ route table and the four state machines are written down. Merged.
 
 | # | Task | Files | Done when |
 |---|---|---|---|
-| 1.1 | Remove HeroUI chain (F1) | delete `components/ui/{heroui-drawer,demo,sidebar-nav}.tsx`, `ui/heroui-drawer-utils/`; strip 5 `@import`s from `styles.css`; rebuild styleguide drawer on `Modal`; drop `@heroui/*` | `bun run build` largest first-party chunk < 300 kB; styleguide still demonstrates a drawer |
+| 1.1 | ✅ Remove HeroUI chain (F1) | wrote `components/Drawer.tsx`; rewrote `NavDrawer` and `ui/demo.tsx` on it; deleted `heroui-drawer.tsx` + `heroui-drawer-utils/`; stripped the imports from `styles.css`; dropped `@heroui/*` | met: JS −134 kB, CSS −39 kB, and the phone menu still opens, traps focus, closes on Escape and restores scroll (verified over CDP) |
 | 1.2 | Remove `motion` (0 imports) and resolve `pinets` | `package.json` | `bun install` clean; chart still renders |
 | 1.3 | Canonical skills (F2) | delete `agent/skills/`; note `.agents/skills` in `README.md` | `.claude/skills` symlinks still resolve |
 | 1.4 | Artifacts out of git (F3) | move ≤6 curated images to `docs/media/`; delete rest; ignore `artifacts/` | clone size drops from ~40 MB to <5 MB |
@@ -132,7 +132,7 @@ not a headline number.
 |---|---|---|---|---|
 | R1 | Phase 3 grows a second intent router | high | medium | `03-routing.md` §"the decision that matters most": all language goes through `ninth/router.ts` |
 | R2 | Automations introduce wall-clock time and break replay | high | high | injected clock, enforced by test |
-| R3 | HeroUI removal breaks the styleguide | medium | low | rebuild on `Modal`, keep the demo section |
+| R3 | HeroUI removal breaks the phone menu | medium | low | done: rebuilt on our own `Drawer`, verified with CDP (open, focus trap, Escape, scrim, scroll restore) |
 | R4 | `deploy.json` / `wrangler.jsonc` drift | medium | high (failed publish after green build) | `postbuild.mjs` guard + checklist |
 | R5 | Public read-only API is scraped/abused | medium | low | no model calls on those routes; IP rate limit |
 | R6 | A skill (Phase 4.2) rephrases a refusal into advice | medium | high | the skill's first rule is the refusal contract; test with a blocked plan |

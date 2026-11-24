@@ -4,7 +4,7 @@ import { Menu, PanelLeftClose } from 'lucide-react'
 
 import { cx } from '../../lib/cx'
 import { Link, useLocation } from '../../lib/router'
-import { Drawer, useOverlayState } from './heroui-drawer'
+import { Drawer } from '../Drawer'
 
 export type NavItem = { href: string; label: string; icon: ComponentType<SVGProps<SVGSVGElement>> }
 
@@ -119,31 +119,23 @@ export function NavRail({
   )
 }
 
-/* The same list as a HeroUI drawer, for phones, behind the hamburger. */
+/* The same list as a left sheet, for phones, behind the hamburger. */
 export function NavDrawer({ items, title = 'Rook', children }: { items: NavItem[]; title?: string; children?: ReactNode }) {
-  const state = useOverlayState()
+  const [open, setOpen] = useState(false)
   return (
-    <Drawer state={state}>
-      <Drawer.Trigger
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
         aria-label="Open navigation"
         className="grid size-11 shrink-0 place-items-center rounded-full text-soft transition-colors hover:bg-white/6 hover:text-fg"
       >
         <Menu aria-hidden className="size-5" />
-      </Drawer.Trigger>
-      <Drawer.Backdrop>
-        <Drawer.Content placement="left">
-          <Drawer.Dialog>
-            <Drawer.CloseTrigger />
-            <Drawer.Header>
-              <Drawer.Heading>{title}</Drawer.Heading>
-            </Drawer.Header>
-            <Drawer.Body>
-              <NavList items={items} expanded onSelect={() => state.close()} />
-              {children}
-            </Drawer.Body>
-          </Drawer.Dialog>
-        </Drawer.Content>
-      </Drawer.Backdrop>
-    </Drawer>
+      </button>
+      <Drawer open={open} onClose={() => setOpen(false)} title={title}>
+        <NavList items={items} expanded onSelect={() => setOpen(false)} />
+        {children}
+      </Drawer>
+    </>
   )
 }

@@ -122,7 +122,8 @@ src/
 | Vela plugin host | `lib/ninth-panel.tsx` → `lib/vela-ninth-plugin.tsx` | the current name collides with the UI component (F-small) |
 | Worker routes | `worker/index.ts` → `worker/routes/*.ts` | 240 lines is fine now; six route modules keep validation next to its contract before it becomes 600 |
 | API types | inline in `worker/index.ts` → `shared/contracts.ts` | the browser and the edge must agree on `{ok,data,error,errors}` |
-| Delete | `components/ui/{heroui-drawer.tsx,demo.tsx,sidebar-nav.tsx,heroui-drawer-utils/}` | F1 |
+| Delete | `components/ui/heroui-drawer.tsx`, `components/ui/heroui-drawer-utils/` | F1 (done) |
+| Add | `components/Drawer.tsx` — the phone sheet, on our tokens | F1 (done) |
 | Delete | `agent/skills/` | F2 |
 | Delete | `artifacts/*` except a curated `docs/media/` | F3 |
 
