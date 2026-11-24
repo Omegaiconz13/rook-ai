@@ -17,6 +17,53 @@ bun test           # bun:test, src/**/*.test.ts
 bun run build
 ```
 
+## Ninth, the desk's assistant
+
+Ninth is built the way the Minara harness is built — one assistant, a deterministic router,
+typed and tiered tools, budgeted playbooks, four memory stores and an audit log — and
+deliberately not in their UI. The architecture and the reasoning behind every difference are
+in [`specs/004-ninth-harness/design.md`](specs/004-ninth-harness/design.md), grounded in a
+close reading of the app and the published skill pack in
+[`specs/research/2026-11-24-minara-system-research.md`](specs/research/2026-11-24-minara-system-research.md).
+
+- **Model and harness are separate.** The Worker route holds the key and streams tokens; the
+  browser owns the router, the tools, the gate and the transcript. With no key, Ninth answers
+  from the desk itself — that is the default demo, and it calls no tools.
+- **Routing is code, not model choice.** `src/shared/ninth/router.ts` scores the question
+  against 12 skill packs and hands the loop only the tools that skill allows.
+- **Every tool call passes a gate.** `gate.ts` enforces four tiers — read, decide, write,
+  confirm — with per-turn caps, a write ceiling and a pending-call TTL. A refusal is a normal
+  answer: it is shown, and it is audited, not raised as an error.
+- **Commands are commands, not routes.** `/review` (four fixed roles), `/draft` (Pine for the
+  addon, then `simulate`), `/watch` (one price line, fires once), `/memory`, `/trace`.
+- **Nothing retypes a number.** `journal_append` builds its row through the desk's own
+  `rowFromVerdict`/`manualRow`, so the model chooses *whether* to write, never the numbers.
+
+Status, stated plainly: B1–B6 are shipped and tested, and the first write tool is shipped; the
+remaining write tools (`ticket_propose`, `limits_update`, `ticket_confirm`), `ask_user`,
+`activate_skills` and the published skill packs are not built yet. The model adapter is proven
+against recorded frames and a fake provider — **no real model turn has run, because no key has
+been set here.** `POST /api/ninth/turn` is unauthenticated, so on a public deployment anyone
+who can reach it can spend the key. Both facts are recorded in the design doc rather than
+papered over.
+
+## Research, specs and skills
+
+| Path | Contents |
+| --- | --- |
+| `specs/001-ai-trading-desk/` | The desk: spec, plan, tasks, data model, the gate and Worker contracts, quickstart, requirements checklist |
+| `specs/002-vela-charts/` | The chart workspace design |
+| `specs/003-pine-script/` | The Pine addon: what it is for, and how it is licensed |
+| `specs/004-ninth-harness/` | Ninth's architecture: routing, tools, tiers, memory, learning, phases, and the gaps left open |
+| `specs/research/` | The two source reviews: the external indicator sources, and Minara read as a system |
+| `.specify/memory/constitution.md` | The rules this project is held to — paper only, code decides, every number has a source |
+| `.agents/skills/` | The Vela skill packs the chart work was done against, pinned in `skills-lock.json` |
+| `artifacts/` | Screenshots taken while building, kept as the visual record of each screen and state |
+
+Licensing today: the Pine addon is **AGPL-3.0-only** because `pinets` is, and `docs/vela.md`
+records the decision; the app itself has no licence file yet, so nothing here is granted for
+reuse beyond GitHub's terms. The skill packs are vendored third-party documents, not ours.
+
 ## What is real and what is sample
 
 - **Real:** the risk gate (15 ordered rules), position sizing in integer cents,

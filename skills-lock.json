@@ -1,0 +1,68 @@
+{
+  "version": 2,
+  "skills": {
+    "adding-vela-indicators": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "skills/adding-vela-indicators/SKILL.md",
+      "computedHash": "c6a1c9d9fbe7048018ed28f3dcc579aae6c9e96c64008d71911de495fa913e05"
+    },
+    "building-vela-charts": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "skills/building-vela-charts/SKILL.md",
+      "computedHash": "e6b519c5a6aa1df00d4f3a12cbfbcaa570b19789c3feb85719a9a1b0de80f1b2"
+    },
+    "extending-vela-with-plugins": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "skills/extending-vela-with-plugins/SKILL.md",
+      "computedHash": "0ff05f5438f0db214986d01831268393ff9e86a943623273872b93290fc2f030"
+    },
+    "theming-vela-ui": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "packages/vela-ui/skills/theming-vela-ui/SKILL.md",
+      "computedHash": "41a36ae186b6a7233b09a8bba8b7163732bee398fa00280e94e8bab6773b35ee"
+    },
+    "upgrading-vela": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "skills/upgrading-vela/SKILL.md",
+      "computedHash": "c265a9646ba09d008afc517b51ecef7b450d30ea5033d107517f7b16eb08521e"
+    },
+    "using-vela-data-providers": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "skills/using-vela-data-providers/SKILL.md",
+      "computedHash": "149cf5ccd6cc2cabc1503aa4c4ed4bd491fc7b7a937626e048f496f7301538ab"
+    },
+    "using-vela-drawing-tools": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "skills/using-vela-drawing-tools/SKILL.md",
+      "computedHash": "2ebc354248f9bac30e5e5a2f472de52e1c0e17d2029f9658979425c8cddf613b"
+    },
+    "using-vela-ui-components": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "packages/vela-ui/skills/using-vela-ui-components/SKILL.md",
+      "computedHash": "38874696bc63dc41e00a956fd9ff5b98b0d41ebdb0f4ca756b4575e5b86967dc"
+    },
+    "writing-vela-ui-components": {
+      "source": "LuxAlgo/Vela",
+      "commit": "3d2179bd01da000c4ffbf8c94d55d2011701254f",
+      "sourceType": "github",
+      "skillPath": "packages/vela-ui/skills/writing-vela-ui-components/SKILL.md",
+      "computedHash": "ba6853650c5c5835960dc73a1b078d1b7b6b633a5d4eb4b915ddc73ea85c90b9"
+    }
+  }
+}
