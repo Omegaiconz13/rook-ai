@@ -12,3 +12,6 @@ __pycache__
 
 # transport bundles, never committed
 *.bundle
+
+# QA screenshots are evidence, not source: keep six in docs/media instead
+artifacts/

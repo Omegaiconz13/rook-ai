@@ -108,34 +108,39 @@ scroll lock owned by one hook) and rebuilt both `NavDrawer` and the styleguide d
 
 ### F2 — Two copies of the vendored skill pack
 
-`.agents/skills/` and `agent/skills/` both contain the same nine Vela skills. They are *not*
-byte-identical: `diff` shows only YAML line-folding differences, so they are the same upstream content
-serialised twice. `.claude/skills/*` are symlinks into `.agents/skills/`, which makes `.agents/skills`
+### F2 — Two copies of the vendored skill pack  *(fixed)*
+
+`.agents/skills/` and `agent/skills/` held the same nine Vela skills. They were *not*
+byte-identical — `diff` showed only YAML line-folding differences, so the same upstream content was
+serialised twice. `.claude/skills/*` are symlinks into `.agents/skills/`, which made `.agents/skills`
 the canonical copy and `agent/skills` dead weight (92 kB, 10 files, plus a second place to update).
 
-**Action:** delete `agent/skills/`, keep `.claude/skills` symlinks, document `.agents/skills` as the
-one install location in the blueprint and in `README.md`.
+**Action taken:** `agent/skills/` deleted; the `.claude/skills` symlinks still resolve (checked after
+the delete); `README.md` names `.agents/skills` as the one install location.
 
-### F3 — 36 MB of development screenshots are in git
+### F3 — 36 MB of development screenshots are in git  *(fixed)*
 
-`artifacts/` holds **202 PNGs and one JSON export** (36 MB) — build/QA evidence from the styling work
-(`bug-clip-before.png`, `charts-full-1440.png`, …). They are useful during a change and dead weight in
-a clone. `public/images/` separately holds the three real product photos (224 kB total), which are the
-ones that ship.
+`artifacts/` held **202 PNGs and one JSON export** (36 MB) — build/QA evidence from the styling work
+(`bug-clip-before.png`, `charts-full-1440.png`, …). Useful during a change, dead weight in a clone.
+`public/images/` separately holds the three real product photos (224 kB total), which are the ones
+that ship.
 
-**Action:** move the curated handful to `docs/media/`, delete the rest, and keep history in git. Add a
-`artifacts/` ignore rule so it cannot regrow.
+**Action taken:** six representative screenshots (872 kB) moved to `docs/media/` and documented in
+`docs/MEDIA.md`; `artifacts/` removed from the index and ignored, so it cannot regrow. The files stay
+on the machine that captured them, out of history.
 
-### F4 — The route table is code, so nothing can test it
+### F4 — The route table is code, so nothing can test it  *(fixed)*
 
-`routes` is an array inside `src/App.tsx`, the nav items are a second array inside
-`src/pages/app/AppShell.tsx`, the footer has a third list, and two dynamic routes are matched outside
-the table with `match('/app/setup/:symbol', …)`. Nothing verifies that every nav link resolves, and
-nothing can generate a sitemap or an `llms.txt` from the truth.
+`routes` was an array inside `src/App.tsx`, the rail items were a second array inside
+`src/pages/app/AppShell.tsx`, the nav and footer read a third list in `content.ts`, and two dynamic
+routes were matched outside the table with `match('/app/setup/:symbol', …)`. Nothing verified that
+every link resolved, and nothing could generate a sitemap from the truth.
 
-**Action:** extract `src/lib/routes.ts` as the single table (path, layout, title, guard, chunk), have
-`App.tsx`, `Nav`, `AppShell`, `Footer` and the tests read it, and add a test that every internal href
-in the repo resolves to a known route.
+**Action taken:** `src/lib/routes.ts` is now the single table (path, title, layout, dynamic flag) with
+`routeFor()`, `titleFor()`, `resolves()` and `DESK_NAV`. `App.tsx` renders by looking the path up in
+it, the desk rail maps its hrefs and labels from it, and `routes.test.ts` (9 tests) proves that every
+link in the marketing nav and footer resolves, that the rail points only at app routes, that titles
+are unique, and that an unknown path has no route.
 
 ### F5 — Spec 004 describes modules that do not exist
 

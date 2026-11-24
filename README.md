@@ -14,6 +14,7 @@ bun install
 bun run dev        # http://localhost:5333
 bun run typecheck
 bun test           # bun:test, src/**/*.test.ts
+bun run check      # the layer rule: imports point inward, checked over src/
 bun run build
 ```
 
@@ -57,8 +58,8 @@ papered over.
 | `specs/004-ninth-harness/` | Ninth's architecture: routing, tools, tiers, memory, learning, phases, and the gaps left open |
 | `specs/research/` | The two source reviews: the external indicator sources, and Minara read as a system |
 | `.specify/memory/constitution.md` | The rules this project is held to — paper only, code decides, every number has a source |
-| `.agents/skills/` | The Vela skill packs the chart work was done against, pinned in `skills-lock.json` |
-| `artifacts/` | Screenshots taken while building, kept as the visual record of each screen and state |
+| `.agents/skills/` | The Vela skill packs the chart work was done against, pinned in `skills-lock.json`. `.claude/skills/` symlinks into it; `agent/skills/` was a duplicate and is gone |
+| `docs/media/` | Six screenshots of the product, described in `docs/MEDIA.md`. `artifacts/` (202 QA captures, 36 MB) is ignored |
 
 Licensing today: the Pine addon is **AGPL-3.0-only** because `pinets` is, and `docs/vela.md`
 records the decision; the app itself has no licence file yet, so nothing here is granted for
