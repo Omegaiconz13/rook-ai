@@ -1,8 +1,8 @@
 # Rook: the AI trading desk
 
-A supervised desk for one trade at a time. Eight seats read a session and argue
-both sides, plain code decides whether the trade is allowed, and every decision
-— including every refusal — is journaled. Paper only, and the demo runs offline
+A supervised desk for one trade at a time. Ninth, the desk's assistant, reads the
+chart, the written rules and the journal, plain code decides whether the trade is
+allowed, and every decision — including every refusal — is journaled. Paper only, and the demo runs offline
 against one labelled session of delayed Yahoo Finance bars, with no keys and no
 signup.
 
@@ -62,10 +62,9 @@ diff is the record of what changed.
 | `/app/charts` | The full chart workspace (Vela) over the same snapshot: symbol search, timeframes, indicators, drawings, layouts |
 | `/app/setup/:symbol` | One symbol: candles, opening range, plan levels, Time Machine, and the sessions behind its count |
 | `/app/session/:symbol/:date` | One past session from that count, levels drawn, outcome stated |
-| `/app/room` | The seats: run the room on a plan, read the memo and the case against |
 | `/app/risk` | The gate: edit limits, check a plan against all 15 rules, confirm a paper ticket |
 | `/app/journal` | The journal: rows (gate checks and entries written by hand), a month calendar and a day note per session, analytics with sample gates, row editing, paper tickets, CSV and JSON backup/restore |
-| `/app/chat` | Ask the desk, answered from the last packet with a citation |
+| `/app/chat` | Ninth, full page: the same answers as the chart panel, for any symbol in the scan |
 | `/styleguide` | Every token and component, rendered by the real code |
 | anything else | 404 |
 
@@ -84,7 +83,8 @@ diff is the record of what changed.
 | `src/shared/stats.ts` | Wilson intervals, sample gates and split-half agreement behind every percentage |
 | `src/shared/ticket.ts` | Paper-ticket state machine and the fill replay |
 | `src/shared/simulate.ts` | Time Machine: 10k seeded replays from the past sessions |
-| `src/shared/packet.ts` | Seat notes, rubric, memo, grounded answers |
+| `src/shared/ninth.ts` | Ninth's answers, and Analyze, its one writing command. Deterministic: no model |
+| `src/components/NinthPanel.tsx` | The panel itself: transcript, Analyze, composer, snapshot footer |
 | `src/shared/chartfeed.ts` | The chart's bars: cents → price, session-aware aggregation, daily candles |
 | `src/lib/rook-provider.ts` | Rook's symbols and timeframes, served through Vela's data-provider port |
 | `docs/vela.md` | The chart integration's seams, upgrade ritual, contract checks and licensing notes |
@@ -105,7 +105,6 @@ All in `src/worker/index.ts`. Each validates its input and answers JSON.
 | `POST /api/risk/check` | `{ plan, limits, account, session, history }` | the gate verdict |
 | `POST /api/simulate` | `{ plan, seed?, runs? }` | Time Machine probabilities, 422 on bad levels |
 | `GET /api/news` | `?symbol=` | fixture headlines, calendar and regime |
-| `POST /api/room/run` | `{ plan, limits, account, session }` | seat notes, rubric, memo |
 | `POST /api/signup`, `POST /api/login` | form fields | the demo user, or 422 field errors |
 | `POST /api/subscribe`, `POST /api/contact` | form fields | 200 or 422 |
 | anything else under `/api/` | | 404 JSON |

@@ -20,7 +20,6 @@ import { Modal } from '../components/Modal'
 import { Notice } from '../components/Notice'
 import { PlanCard } from '../components/PlanCard'
 import { ProgressBar, ScoreRing } from '../components/Progress'
-import { SeatCard } from '../components/SeatCard'
 import { Segmented } from '../components/Segmented'
 import { Skeleton } from '../components/Skeleton'
 import { SourceBadge } from '../components/SourceBadge'
@@ -32,7 +31,6 @@ import Navigation from '../components/ui/demo'
 import { GateVerdictCard, VerdictPill } from '../components/Verdict'
 import { FAQ, PLANS } from '../content'
 import { barsFor } from '../shared/fixtures'
-import type { SeatNote } from '../shared/packet'
 import type { GateVerdict } from '../shared/risk'
 
 const APPROVED: GateVerdict = {
@@ -55,15 +53,6 @@ const BLOCKED: GateVerdict = {
   decidingLimit: null,
   lossAtStopCents: null,
   rewardRisk: 1,
-}
-
-const SEAT: SeatNote = {
-  role: 'bear',
-  title: 'The case against',
-  verdict: 'block',
-  reason: 'The target needs a clean break of yesterday\u2019s high, forty points above the entry.',
-  evidence: ['priorHigh 36,760', 'target 37,590', 'range high 36,218'],
-  packetRef: 'packet.levels.targetCents',
 }
 
 const COLORS = [
@@ -383,7 +372,7 @@ export function Styleguide() {
           <p className="text-[13px] text-muted">
             HeroUI's drawer (<code className="font-mono text-[12px]">src/components/ui/heroui-drawer.tsx</code>) with our surface tokens. On the desk it
             becomes the phone menu; the rail at{' '}
-            <code className="font-mono text-[12px]">/app</code> opens on hover and collapses to icons when you pick a seat.
+            <code className="font-mono text-[12px]">/app</code> opens on hover and collapses to icons when you pick a page.
           </p>
         </div>
       </Block>
@@ -393,9 +382,6 @@ export function Styleguide() {
           <GateVerdictCard verdict={APPROVED} />
           <GateVerdictCard verdict={BLOCKED} />
         </div>
-        <ul className="mt-6 grid gap-4 md:grid-cols-2">
-          <SeatCard note={SEAT} index={4} />
-        </ul>
         <div className="mt-6">
           <BarChart
             bars={barsFor('TSLA')}

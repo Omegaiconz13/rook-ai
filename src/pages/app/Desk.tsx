@@ -7,7 +7,7 @@ import { Disclaimer } from '../../components/Disclaimer'
 import { EmptyState } from '../../components/EmptyState'
 import { Segmented } from '../../components/Segmented'
 import { StatTile } from '../../components/StatTile'
-import { accountFor, useAccountState, useJournal, useLastMemo, useLimits } from '../../lib/desk'
+import { accountFor, useAccountState, useJournal, useLimits } from '../../lib/desk'
 import { Link } from '../../lib/router'
 import { SESSION_DATE } from '../../shared/market'
 import { deskSetups, FAMILY_LABEL, FAMILY_SHORT } from '../../shared/setups'
@@ -25,7 +25,6 @@ export function DeskPage() {
   const [limits] = useLimits()
   const [stored] = useAccountState()
   const [journal] = useJournal()
-  const lastMemo = useLastMemo()
   const [q, setQ] = useState('')
   const [family, setFamily] = useState<'all' | SetupFamily>('all')
 
@@ -35,18 +34,6 @@ export function DeskPage() {
   const blocked = today.filter((r) => r.verdict === 'BLOCKED').length
   const riskLeft = dailyLossCents(limits) - Math.max(0, -account.dayPnlCents) - account.riskUsedCents
   const triggered = setups.filter((s) => s.status === 'triggered').length
-  // A PASS does not always mean the setup seat vetoed it: the gate can approve while
-  // the score or another blocking seat stops the memo, and the line must say which.
-  const lastMemoLine = lastMemo
-    ? lastMemo.memo.gate.ruleId
-      ? `blocked at ${lastMemo.memo.gate.ruleId}`
-      : lastMemo.memo.notes.some((note) => note.role === 'setup' && note.verdict === 'block')
-        ? 'setup seat blocked it'
-        : lastMemo.memo.decision === 'PASS'
-          ? 'the case against won'
-          : `${lastMemo.memo.gate.size} shares approved`
-    : ''
-
   const shown = setups.filter((s) => {
     const hit = !q || `${s.symbol} ${FAMILY_LABEL[s.family]}`.toLowerCase().includes(q.toLowerCase())
     return hit && (family === 'all' || s.family === family)
@@ -63,19 +50,6 @@ export function DeskPage() {
           <StatTile label="Blocked" value={blocked} hint="Refusals are the point" icon={ShieldAlert} />
           <StatTile label="Risk left" value={money(Math.max(0, riskLeft))} hint={`of ${money(dailyLossCents(limits))} daily`} icon={ShieldCheck} />
         </dl>
-
-        {lastMemo && (
-          <div className="panel flex flex-wrap items-center justify-between gap-3 rounded-[22px] px-5 py-4">
-            <p className="text-[13.5px] text-soft">
-              Last memo · <span className="font-mono">{lastMemo.packet.plan.symbol}</span> ·{' '}
-              <span className={lastMemo.memo.decision === 'TAKE' ? 'text-leaf-text' : 'text-danger'}>{lastMemo.memo.decision}</span> ·{' '}
-              {lastMemo.memo.rubricScore}/5 · {lastMemoLine}
-            </p>
-            <ButtonLink href="/app/room" variant="glass" size="sm" className="h-9">
-              Open the room
-            </ButtonLink>
-          </div>
-        )}
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative w-full sm:w-[300px]">

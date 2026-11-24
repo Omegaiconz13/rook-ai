@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Dices, ShieldCheck, Users } from 'lucide-react'
+import { Dices, ShieldCheck } from 'lucide-react'
 
 import { Badge } from '../../components/Badge'
 import { BarChart } from '../../components/BarChart'
@@ -136,9 +136,6 @@ export function SetupPage() {
             <div className="mt-5 flex flex-wrap gap-2">
               <ButtonLink href={`/app/risk?setup=${setup.id}`} variant="glass" size="sm" icon={<ShieldCheck className="size-4" />}>
                 Gate this
-              </ButtonLink>
-              <ButtonLink href={`/app/room?setup=${setup.id}`} variant="ghost" size="sm" icon={<Users className="size-4" />}>
-                Run in the room
               </ButtonLink>
             </div>
           </section>

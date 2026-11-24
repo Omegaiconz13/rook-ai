@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { BookOpen, ChartCandlestick, LayoutDashboard, LogOut, MessageSquareText, Power, RotateCcw, ShieldCheck, UserRound, Users } from 'lucide-react'
+import { BookOpen, ChartCandlestick, LayoutDashboard, LogOut, MessageSquareText, Power, RotateCcw, ShieldCheck, UserRound } from 'lucide-react'
 
 import { Avatar } from '../../components/Avatar'
 import { Button, ButtonLink } from '../../components/Button'
@@ -17,10 +17,9 @@ import { sessionLabel } from '../../shared/time'
 export const APP_NAV = [
   { href: '/app', label: 'Desk', icon: LayoutDashboard },
   { href: '/app/charts', label: 'Charts', icon: ChartCandlestick },
-  { href: '/app/room', label: 'Room', icon: Users },
   { href: '/app/risk', label: 'Gate', icon: ShieldCheck },
   { href: '/app/journal', label: 'Journal', icon: BookOpen },
-  { href: '/app/chat', label: 'Ask', icon: MessageSquareText },
+  { href: '/app/chat', label: 'Ninth', icon: MessageSquareText },
 ]
 
 /** Frame for the desk: an icon rail that opens on hover, or a drawer on phones. */

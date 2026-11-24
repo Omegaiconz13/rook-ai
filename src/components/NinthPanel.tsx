@@ -7,8 +7,10 @@ import { barsFor, dailyFor } from '../shared/fixtures'
 import { SESSION_DATE } from '../shared/market'
 import { analyzeNinth, answerNinth, NINTH_NAME } from '../shared/ninth'
 import type { NinthContext } from '../shared/ninth'
-import { setupsFor } from '../shared/setups'
-import { useJournal, useLastMemo } from '../lib/desk'
+import { checkPlan } from '../shared/risk'
+import type { GateVerdict } from '../shared/risk'
+import { planFromSetup, setupsFor } from '../shared/setups'
+import { accountFor, useAccountState, useConfirmed, useDeskSession, useJournal, useLimits } from '../lib/desk'
 import { drawSetupLevels, drawSetupPosition, setupLevelsFor } from '../lib/vela'
 import { Button } from './Button'
 import { ChatBubble } from './ChatBubble'
@@ -20,6 +22,8 @@ const SUGGESTIONS = ['Where are the levels?', 'Any setups on the scan?', 'Why wa
 type Props = {
   /** The chart to read, resolved at the moment of every question (the shell rebinds it). */
   getChart: () => Vela | null
+  /** Where there is no chart (the full page), read this symbol instead. */
+  symbol?: string
   /**
    * The row's controls: close always, maximize only where the host can expand
    * the panel. A phone overlay passes close alone, so it draws no dead button.
@@ -33,16 +37,20 @@ type Props = {
  * it works with no model, no key and no network — and says when it has nothing
  * to read instead of guessing.
  */
-export function NinthPanel({ getChart, header }: Props) {
+export function NinthPanel({ getChart, header, symbol: pinned }: Props) {
   const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
   const nextId = useRef(1)
   const [journal] = useJournal()
-  const memo = useLastMemo()?.memo ?? null
+  const [limits] = useLimits()
+  const [stored] = useAccountState()
+  const [confirmed] = useConfirmed()
+  const { session } = useDeskSession()
   const [, rerender] = useState(0)
 
   const chart = getChart()
-  const symbol = chart ? bareTicker(chart.market.symbol ?? '') : ''
+  // On the charts page the bound cell decides the symbol; on the full page, the picker does.
+  const symbol = (chart ? bareTicker(chart.market.symbol ?? '') : '') || pinned || ''
   const timeframe = timeframeFor(chart?.market.timeframe ?? '') ?? DEFAULT_TIMEFRAME
   const timeframeLabel = TIMEFRAME_LABEL[timeframe]
 
@@ -53,18 +61,41 @@ export function NinthPanel({ getChart, header }: Props) {
     return chart.on('market:changed', () => rerender((tick) => tick + 1))
   }, [chart])
 
+  const setups = useMemo(() => (symbol ? setupsFor(symbol, barsFor(symbol), dailyFor(symbol)) : []), [symbol])
+  const levels = useMemo(
+    () => (symbol ? setupLevelsFor(symbol).map((level) => ({ label: level.label, priceCents: level.priceCents })) : []),
+    [symbol],
+  )
+
+  /**
+   * The gate is not a seat and never needed the room: it is the same pure call the
+   * Gate page makes, run here on the setup the chart is showing, so "why was it
+   * blocked" is answered by the rule that actually decided it.
+   */
+  const gate = useMemo<GateVerdict | null>(() => {
+    const planSetup = setups.find((candidate) => candidate.status === 'triggered') ?? setups[0]
+    if (!planSetup) return null
+    return checkPlan({
+      plan: planFromSetup(planSetup),
+      limits,
+      account: accountFor(limits, stored),
+      session,
+      history: confirmed.filter((entry) => entry.sessionDate === SESSION_DATE),
+    })
+  }, [setups, limits, stored, session, confirmed])
+
   const context = useMemo<NinthContext>(
     () => ({
       symbol,
       timeframe: timeframeLabel,
       bars: symbol ? chartHistory(symbol, timeframe) : [],
-      levels: symbol ? setupLevelsFor(symbol).map((level) => ({ label: level.label, priceCents: level.priceCents })) : [],
-      setups: symbol ? setupsFor(symbol, barsFor(symbol), dailyFor(symbol)) : [],
+      levels,
+      setups,
       journal,
-      memo,
+      gate,
       today: SESSION_DATE,
     }),
-    [symbol, timeframe, timeframeLabel, journal, memo],
+    [symbol, timeframe, timeframeLabel, levels, setups, journal, gate],
   )
 
   const maximized = header.maximized
@@ -153,8 +184,8 @@ export function NinthPanel({ getChart, header }: Props) {
         {messages.length === 0 ? (
           <div className="grid gap-3">
             <p className="text-[16px] leading-relaxed text-muted">
-              I read the chart in front of you, its written levels, the setups, the last memo and the journal. Ask about any of
-              them and I will name where the answer came from.
+              I read the chart in front of you: its written levels, the setups, the gate's verdict on the setup and the journal.
+              Ask about any of them and I will name where the answer came from.
             </p>
             <div className="flex flex-wrap gap-2">
               {SUGGESTIONS.map((suggestion) => (
@@ -185,12 +216,14 @@ export function NinthPanel({ getChart, header }: Props) {
         }}
         className="shrink-0 border-t border-line px-3 py-2.5"
       >
-        <div className="mb-2 flex items-center gap-2">
-          <Button variant="leaf" size="md" icon={<Crosshair aria-hidden className="size-4" />} onClick={analyze}>
-            Analyze
-          </Button>
-          <span className="truncate text-[11.5px] text-faint">reads the chart · draws the setup</span>
-        </div>
+        {chart && (
+          <div className="mb-2 flex items-center gap-2">
+            <Button variant="leaf" size="md" icon={<Crosshair aria-hidden className="size-4" />} onClick={analyze}>
+              Analyze
+            </Button>
+            <span className="truncate text-[11.5px] text-faint">reads the chart · draws the setup</span>
+          </div>
+        )}
         <label htmlFor="ninth-input" className="sr-only">
           Ask {NINTH_NAME} about this chart
         </label>

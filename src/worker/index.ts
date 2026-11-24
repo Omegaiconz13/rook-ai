@@ -3,7 +3,6 @@ import { Hono } from 'hono'
 import { barsFor, SESSION_DATE } from '../shared/fixtures'
 import { DATA, INSTRUMENTS } from '../shared/market'
 import { headlinesFor } from '../shared/news'
-import { runRoom } from '../shared/packet'
 import { checkPlan } from '../shared/risk'
 import type { Account, RiskLimits, SessionInfo, TradePlan } from '../shared/risk'
 import { simulate } from '../shared/simulate'
@@ -107,19 +106,6 @@ app.get('/api/news', (c) => {
   const items = symbols.flatMap((s) => headlinesFor(s))
   if (items.length === 0) return c.json({ ok: true, data: [], source: 'fixture' })
   return c.json({ ok: true, data: items, source: 'fixture' })
-})
-
-app.post('/api/room/run', async (c) => {
-  const b = await body<{ plan: TradePlan; limits: RiskLimits; account: Account; session: SessionInfo; history: { symbol: string; sessionDate: string }[] }>(c)
-  if (!b) return c.json(invalidJson, 400)
-  const { plan, limits, account, session } = b
-  if (!plan || !limits || !account || !session) return c.json(fields, 422)
-  const numbers = [plan.entryCents, plan.stopCents, plan.targetCents, limits.equityCents]
-  if (numbers.some((n) => typeof n !== 'number' || !Number.isFinite(n))) {
-    return c.json({ ok: false, error: 'Plan and limits need numeric prices.', errors: { plan: 'Prices must be numbers in cents.' } }, 422)
-  }
-  const result = runRoom({ plan, limits, account, session, history: Array.isArray(b.history) ? b.history : [] })
-  return c.json({ ok: true, data: { notes: result.memo.notes, gate: result.memo.gate, memo: result.memo } })
 })
 
 app.post('/api/signup', async (c) => {

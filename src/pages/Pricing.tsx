@@ -9,7 +9,7 @@ import { PricingPlans } from '../sections/PricingPlans'
 export function Pricing() {
   return (
     <>
-      <PageIntro eyebrow="Pricing" title="Free on the sample session, paid when you need a feed" lede="The gate, the room and the journal work offline for nothing. A delayed public feed and the review tools are the paid part, and you can cancel any time." />
+      <PageIntro eyebrow="Pricing" title="Free on the sample session, paid when you need a feed" lede="The gate, the journal and Ninth work offline for nothing. A delayed public feed and the review tools are the paid part, and you can cancel any time." />
       <div className="-mt-16">
         <PricingPlans heading={false} />
       </div>

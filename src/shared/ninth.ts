@@ -1,6 +1,6 @@
 import type { ChartBar } from './chartfeed'
 import type { JournalRow } from './journal'
-import type { Memo } from './packet'
+import type { GateVerdict } from './risk'
 import { price } from './sizing'
 import type { Setup } from './setups'
 import { FAMILY_LABEL } from './setups'
@@ -27,7 +27,8 @@ export type NinthContext = {
   /** Every setup family found for the symbol today. */
   setups: Setup[]
   journal: JournalRow[]
-  memo: Memo | null
+  /** The gate's verdict on the setup this symbol is showing, or null when no rule fired. */
+  gate: GateVerdict | null
   /** The session date the desk is running (`SESSION_DATE`). */
   today: string
 }
@@ -83,21 +84,26 @@ function setupsAnswer(ctx: NinthContext): NinthAnswer {
   }
 }
 
-function memoAnswer(ctx: NinthContext): NinthAnswer {
-  if (!ctx.memo) {
+/** Gate reasons are written as sentences; inside one of mine, one full stop is enough. */
+const trimStop = (reason: string) => reason.replace(/\.$/, '')
+
+function gateAnswer(ctx: NinthContext): NinthAnswer {
+  if (!ctx.gate) {
     return {
-      text: 'There is no memo yet, so there is no gate verdict to explain. Run the room on a plan and I can read its decision, its score and the rule that stopped it.',
-      refs: ['memo:none'],
+      text: `No written rule gave the gate a plan on ${ctx.symbol} today, so there is no verdict to explain. I will not describe a refusal that never happened.`,
+      refs: ['gate:none'],
     }
   }
-  const { memo } = ctx
-  const outcome = memo.gate.ruleId
-    ? `The gate stopped it at ${memo.gate.ruleId}.`
-    : `The gate approved ${memo.gate.size} shares.`
-  const against = memo.counterCase ? ` The strongest point against it: ${memo.counterCase}` : ''
+  const { gate } = ctx
+  if (gate.ruleId) {
+    return {
+      text: `${ctx.symbol}: the gate blocked the plan at ${gate.ruleId}. ${gate.reason}`,
+      refs: ['gate', `rule:${gate.ruleId}`],
+    }
+  }
   return {
-    text: `Last memo on ${ctx.symbol}: ${memo.decision}, rubric ${memo.rubricScore}/5. ${outcome}${against}`,
-    refs: ['memo', 'gate', memo.gate.ruleId ? `rule:${memo.gate.ruleId}` : 'sizing'],
+    text: `The gate approved ${gate.size} shares on ${ctx.symbol}. ${gate.reason}`,
+    refs: ['gate', 'sizing'],
   }
 }
 
@@ -115,13 +121,13 @@ function journalAnswer(ctx: NinthContext): NinthAnswer {
 }
 
 function riskAnswer(ctx: NinthContext): NinthAnswer {
-  if (!ctx.memo) {
+  if (!ctx.gate) {
     return {
-      text: 'No plan has been through the gate yet. I will not estimate a size: the gate sizes it from your written limits, and until it runs there is no number.',
+      text: 'I will not estimate a size: the gate sizes a plan from your written limits, and no rule has given it a plan on this symbol yet.',
       refs: ['gate:none'],
     }
   }
-  const { gate } = ctx.memo
+  const { gate } = ctx
   if (gate.ruleId) {
     return {
       text: `Size is zero: ${gate.ruleId} stopped the plan before sizing. Clear that rule and the gate will size it against your limits.`,
@@ -153,7 +159,7 @@ function priceAnswer(ctx: NinthContext): NinthAnswer {
 
 function helpAnswer(ctx: NinthContext): NinthAnswer {
   return {
-    text: `No model is connected, so I answer only what the desk can compute: the levels on ${ctx.symbol}, the setups on the scan, your last memo and the gate rule that decided it, the journal, and the last bar. Ask for one of those.`,
+    text: `No model is connected, so I answer only what the desk can compute: the levels on ${ctx.symbol}, the setups on the scan, the gate's verdict on this setup and the rule that decided it, the journal, and the last bar. Ask for one of those.`,
     refs: ['desk'],
   }
 }
@@ -195,13 +201,13 @@ export function analyzeNinth(ctx: NinthContext): NinthAnswer {
     ctx.levels.length > 0
       ? `On the chart: ${ctx.levels.map((level) => `${level.label} ${price(level.priceCents)}`).join(' · ')}.`
       : 'That rule produced no levels to draw.'
-  let gate = 'No plan has been through the gate yet, so there is no verdict to read.'
-  if (ctx.memo) {
-    if (ctx.memo.gate.ruleId) {
-      gate = `Last memo: ${ctx.memo.decision}, rubric ${ctx.memo.rubricScore}/5; the gate stopped it at ${ctx.memo.gate.ruleId}.`
-      refs.push(`rule:${ctx.memo.gate.ruleId}`)
+  let gate = 'No written rule has given the gate a plan on this symbol, so there is no verdict to read.'
+  if (ctx.gate) {
+    if (ctx.gate.ruleId) {
+      gate = `The gate stopped it at ${ctx.gate.ruleId}: ${trimStop(ctx.gate.reason)}.`
+      refs.push(`rule:${ctx.gate.ruleId}`)
     } else {
-      gate = `Last memo: ${ctx.memo.decision}, rubric ${ctx.memo.rubricScore}/5; the gate approved ${ctx.memo.gate.size} shares.`
+      gate = `The gate approved ${ctx.gate.size} shares: ${trimStop(ctx.gate.reason)}.`
       refs.push('gate')
     }
   }
@@ -216,7 +222,7 @@ export function analyzeNinth(ctx: NinthContext): NinthAnswer {
  */
 export function answerNinth(question: string, ctx: NinthContext): NinthAnswer {
   const q = question.toLowerCase()
-  if (/\b(block|blocked|refus|reject|veto|stop(?:ped)? (?:it|the trade))\b/.test(q)) return memoAnswer(ctx)
+  if (/\b(block|blocked|refus|reject|veto|stop(?:ped)? (?:it|the trade))\b/.test(q)) return gateAnswer(ctx)
   if (/\b(journal|logged|wrote|written|record|note)\b/.test(q)) return journalAnswer(ctx)
   if (/\b(size|sizing|shares|position|risk|budget)\b/.test(q)) return riskAnswer(ctx)
   if (/\b(level|levels|entry|stop|target|range)\b/.test(q)) return levelsAnswer(ctx)

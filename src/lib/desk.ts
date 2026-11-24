@@ -2,7 +2,6 @@ import { useCallback, useMemo } from 'react'
 
 import { JOURNAL_MAX_ROWS, journalBundle, migrateDayNotes, migrateJournal, upsertDayNote } from '../shared/journal'
 import type { DayNote, JournalBundle, JournalRow } from '../shared/journal'
-import type { Memo, Packet } from '../shared/packet'
 import type { Account, RiskLimits, SessionInfo } from '../shared/risk'
 import { cancelTicket } from '../shared/ticket'
 import type { PaperTicket } from '../shared/ticket'
@@ -22,7 +21,6 @@ export const KEY = {
   account: 'v1:account',
   journal: 'v1:journal',
   dayNotes: 'v1:daynotes',
-  memos: 'v1:memos',
   user: 'v1:user',
   confirmed: 'v1:confirmed',
   seed: 'v1:seed',
@@ -106,24 +104,6 @@ export function accountFor(limits: RiskLimits, stored: StoredAccount): Account {
 /** Confirmed paper tickets today, used by the duplicate-ticket rule. */
 export function useConfirmed() {
   return useStored<{ symbol: string; sessionDate: string }[]>(KEY.confirmed, [])
-}
-
-export type StoredMemo = { memo: Memo; packet: Packet }
-
-/** Saved memos, newest first. The packet travels with the memo so the ask panel
-    can cite exactly what the room saw, even if limits change afterwards. */
-export function useMemos() {
-  return useStored<StoredMemo[]>(KEY.memos, [])
-}
-
-export function appendMemo(entry: StoredMemo) {
-  const list = readStore<StoredMemo[]>(KEY.memos, [])
-  writeStore(KEY.memos, [entry, ...list].slice(0, 50))
-}
-
-export function useLastMemo(): StoredMemo | null {
-  const [memos] = useMemos()
-  return memos[0] ?? null
 }
 
 export function appendJournal(row: JournalRow) {

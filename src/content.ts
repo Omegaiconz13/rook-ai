@@ -32,15 +32,15 @@ export const NAV = [
 export const HERO = {
   titleTop: 'Rook',
   titleBottom: 'Trading Desk',
-  lede: 'A supervised desk for one trade at a time: the seats read the session, argue both sides and write a memo. Plain code holds the risk line, and it can say no.',
+  lede: 'A supervised desk for one trade at a time: Ninth reads the chart, the rules and the journal, plain code holds the risk line, and it can say no.',
   cta: 'Open the desk',
-  caption: `Eight seats and fifteen rules on every plan. No signup, no keys: the demo is one labelled ${DATA.real ? 'session of delayed market data' : 'sample session'}.`,
+  caption: `Fifteen rules on every plan. No signup, no keys: the demo is one labelled ${DATA.real ? 'session of delayed market data' : 'sample session'}.`,
 }
 
 export const FEATURES = {
   eyebrow: 'Features',
   title: 'Between a chart and an order, a great deal should happen',
-  lede: 'The desk does the reading, the arguing and the recording. The gate does the arithmetic, and it never negotiates.',
+  lede: 'The desk does the reading and the recording. The gate does the arithmetic, and it never negotiates.',
   items: [
     {
       image: 'watchlist' as const,
@@ -54,12 +54,12 @@ export const FEATURES = {
     },
     {
       image: 'memo' as const,
-      title: 'A memo, not a mood',
-      body: 'Analyst, news, setup, bull and bear notes in one page, with the strongest point against the trade and a score from 1 to 5.',
+      title: 'A verdict, not a mood',
+      body: 'What the scan found, what the gate answered and why, on one page with the numbers that produced it instead of a mood.',
     },
   ],
   extras: [
-    { icon: 'message' as const, title: 'Grounded answers', body: 'Every note cites the line of the packet it came from.' },
+    { icon: 'message' as const, title: 'Grounded answers', body: 'Every answer names the data it read: the rule, the bar or the gate.' },
     { icon: 'lock' as const, title: 'Paper by default', body: 'No broker connection, no live orders, no keys in the browser.' },
     { icon: 'languages' as const, title: 'Public data only', body: 'The demo runs offline on one labelled session, fetched once at build time. No keys, no requests at load.' },
     { icon: 'timer' as const, title: 'Flat by 15:55', body: 'The gate refuses new entries after your cut-off, every day.' },
@@ -72,17 +72,16 @@ export const STEPS = {
   items: [
     { n: '01', title: 'Open the desk', body: 'See the session, the setups your rules found and the risk budget you have left. All of it labelled with where the numbers came from.' },
     { n: '02', title: 'Send it to the gate', body: 'Edit your limits once. Every plan is checked against them: size, daily loss, trade cap and reward:risk, in a fixed order.' },
-    { n: '03', title: 'Take the memo, not the mood', body: 'A blocked trade is journaled with the rule that stopped it. A passing trade gets a memo and a counter-case before any ticket exists.' },
+    { n: '03', title: 'Take the verdict, not the mood', body: 'A blocked trade is journaled with the rule that stopped it. A passing trade gets a size and the limit that set it before any ticket exists.' },
   ],
   demo: [
-    { role: 'Analyst', verdict: 'info' as const, text: 'Trend day. Opening range 354.47–362.18; the 10:10 bar closed at 364.18.' },
-    { role: 'Bear', verdict: 'block' as const, text: "The target needs a clean break of yesterday's high, forty points above the entry." },
-    { role: 'Risk manager', verdict: 'block' as const, text: 'Reward:risk is 1.00 against your 1.50 minimum. No size. No order.' },
+    { role: 'Ninth', verdict: 'info' as const, text: 'TSLA 5m: the opening-range rule triggered at 362.18; stop 357.66, target 371.22, both from the rule.' },
+    { role: 'Gate', verdict: 'block' as const, text: 'Reward:risk is 1.00 against your 1.50 minimum. No size. No order.' },
   ],
 }
 
 export const STATS = [
-  { value: 8, suffix: '', label: 'seats on one trade', decimals: 0 },
+  { value: 4, suffix: '', label: 'written setups in the scan', decimals: 0 },
   { value: 15, suffix: '', label: 'rules checked before any order', decimals: 0 },
   { value: 6, suffix: '', label: 'screens that need no API key', decimals: 0 },
   { value: 100, suffix: '%', label: 'paper-only execution', decimals: 0 },
@@ -132,7 +131,7 @@ export const PLANS: Plan[] = [
     yearly: 49,
     blurb: 'For a small trading room.',
     cta: 'Talk to us',
-    features: ['Everything in Plus', '5 seats', 'Shared rulebook and limits', 'Blocked-trade review', 'Audit trail export'],
+    features: ['Everything in Plus', 'Up to 5 traders', 'Shared rulebook and limits', 'Blocked-trade review', 'Audit trail export'],
   },
 ]
 
@@ -183,7 +182,7 @@ export const ABOUT = {
   ],
   numbers: [
     { value: '2026', label: 'founded' },
-    { value: '8', label: 'seats on one trade' },
+    { value: '4', label: 'written setups' },
     { value: '15', label: 'rules in the gate' },
   ],
   contactTitle: 'Say hello',
@@ -199,7 +198,7 @@ export const CTA = {
 }
 
 export const FOOTER = {
-  blurb: 'A supervised AI trading desk: seats that argue, code that decides, and paper before live.',
+  blurb: 'A supervised AI trading desk: Ninth reads, code decides, and paper comes before live.',
   columns: [
     { title: 'Product', links: [{ label: 'Features', href: '/#features' }, { label: 'How it works', href: '/#how-it-works' }, { label: 'Pricing', href: '/pricing' }, { label: 'Open the desk', href: '/app' }] },
     { title: 'Company', links: [{ label: 'About', href: '/about' }, { label: 'Contact', href: '/about#contact' }, { label: 'Style guide', href: '/styleguide' }] },

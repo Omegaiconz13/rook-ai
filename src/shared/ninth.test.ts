@@ -3,7 +3,7 @@ import { describe, expect, test } from 'bun:test'
 import type { ChartBar } from './chartfeed'
 import { analyzeNinth, answerNinth } from './ninth'
 import type { NinthContext } from './ninth'
-import type { Memo } from './packet'
+import type { GateVerdict } from './risk'
 import type { Setup } from './setups'
 
 const bar = (time: number, close: number): ChartBar => ({ time, open: close, high: close, low: close, close })
@@ -37,21 +37,20 @@ const ctx = (over: Partial<NinthContext> = {}): NinthContext => ({
   ],
   setups: [setup()],
   journal: [],
-  memo: null,
+  gate: null,
   today: '2026-11-19',
   ...over,
 })
 
-const memo = (over: Partial<Memo> = {}): Memo => ({
-  id: 'm1',
-  planId: 'p1',
-  gate: { allowed: false, ruleId: 'R-05', size: 0, reasons: [], checkedAt: '2026-11-19T10:12:00.000Z' } as unknown as Memo['gate'],
-  notes: [],
-  factors: [],
-  rubricScore: 3,
-  decision: 'PASS',
-  counterCase: 'The stop sits inside the opening range.',
-  createdAt: '2026-11-19T10:12:00.000Z',
+const gate = (over: Partial<GateVerdict> = {}): GateVerdict => ({
+  planId: 'plan-TSLA-orb',
+  verdict: 'blocked',
+  ruleId: 'R-05',
+  reason: 'No stop on this plan. A trade without a stop is not checked.',
+  size: null,
+  decidingLimit: null,
+  lossAtStopCents: null,
+  rewardRisk: 2,
   ...over,
 })
 
@@ -65,9 +64,9 @@ describe('answerNinth', () => {
   })
 
   test('explains the gate before the levels when asked why it was blocked', () => {
-    const answer = answerNinth('why was it blocked?', ctx({ memo: memo() }))
+    const answer = answerNinth('why was it blocked?', ctx({ gate: gate() }))
     expect(answer.text).toContain('R-05')
-    expect(answer.text).toContain('PASS')
+    expect(answer.text).toContain('blocked')
     expect(answer.refs).toContain('rule:R-05')
   })
 
@@ -75,6 +74,12 @@ describe('answerNinth', () => {
     const answer = answerNinth('how many shares?', ctx())
     expect(answer.text).toContain('will not estimate a size')
     expect(answer.text).not.toContain('shares.')
+  })
+
+  test('quotes the size and the reason when the gate approved the plan', () => {
+    const answer = answerNinth('how many shares?', ctx({ gate: gate({ verdict: 'approved', ruleId: null, size: 6, reason: 'Approved 6 shares; position cap set the size.' }) }))
+    expect(answer.text).toContain('approved 6 shares')
+    expect(answer.refs).toContain('gate')
   })
 
   test('counts the journal instead of inventing trades', () => {
@@ -118,8 +123,8 @@ describe('analyzeNinth', () => {
     expect(answer.refs).not.toContain('setup:TSLA-orb')
   })
 
-  test('names the gate rule that stopped the last plan', () => {
-    const answer = analyzeNinth(ctx({ memo: memo() }))
+  test('names the gate rule that stopped the plan', () => {
+    const answer = analyzeNinth(ctx({ gate: gate() }))
     expect(answer.text).toContain('R-05')
     expect(answer.refs).toContain('rule:R-05')
   })
