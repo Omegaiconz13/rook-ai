@@ -2,6 +2,7 @@ import { parseArgs } from './args'
 import { fail } from './result'
 import { DECIDE_TOOLS } from './tools/decide'
 import { READ_TOOLS } from './tools/read'
+import { WRITE_TOOLS } from './tools/write'
 import type { ToolEntry, ToolOutcome, ToolSet, TurnContext } from './types'
 
 /*
@@ -19,7 +20,7 @@ import type { ToolEntry, ToolOutcome, ToolSet, TurnContext } from './types'
 /** A guard returns a refusal to stop the call, or null to let it run. */
 export type ToolGuard = (tool: ToolEntry, rawArgs: unknown) => ToolOutcome | null
 
-const TOOLS: ToolEntry[] = [...READ_TOOLS, ...DECIDE_TOOLS]
+const TOOLS: ToolEntry[] = [...READ_TOOLS, ...DECIDE_TOOLS, ...WRITE_TOOLS]
 const BY_NAME = new Map(TOOLS.map((tool) => [tool.name, tool]))
 
 export function allTools(): readonly ToolEntry[] {

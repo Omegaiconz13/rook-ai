@@ -1,4 +1,5 @@
 import type { ChartBar } from '../chartfeed'
+import type { MemorySnapshot, ObservationSection } from './memory'
 import type { JournalRow } from '../journal'
 import type { Account, GateVerdict, RiskLimits, SessionInfo } from '../risk'
 import type { Setup } from '../setups'
@@ -98,9 +99,24 @@ export type DeskSnapshot = {
   today: string
 }
 
+export type RememberResult = { ok: true; id: string } | { ok: false; why: string }
+
+/**
+ * The writes a tool may ask for. The runtime owns storage and the clock, so a
+ * tool never touches a store itself: it asks, and the answer is the result the
+ * model sees.
+ */
+export type MemoryPorts = {
+  remember?: (observation: { section: ObservationSection; text: string }) => RememberResult
+  saveLearning?: (learning: { trigger: string; sequence: string[]; guidance: string }) => RememberResult
+}
+
 export type TurnContext = {
   question: string
   /** One id per turn: every tool call and audit row carries it. */
   traceId: string
   desk: DeskSnapshot
+  /** What Ninth remembers at the moment of the question. */
+  memory?: MemorySnapshot
+  ports?: MemoryPorts
 }

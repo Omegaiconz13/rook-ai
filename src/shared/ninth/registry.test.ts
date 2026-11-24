@@ -15,7 +15,7 @@ describe('the registry', () => {
   test('lists the read tools under their names', () => {
     expect(toolNames()).toContain('get_quote')
     expect(toolByName('get_quote')?.tier).toBe(1)
-    expect(toolsInSet('write')).toHaveLength(0)
+    expect(toolsInSet('write')).toHaveLength(2)
     expect(allTools().length).toBe(toolNames().length)
   })
 

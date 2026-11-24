@@ -221,7 +221,7 @@ const memory: SkillDef = {
   stages: ['manage'],
   keywords: ['remember', 'memory', 'preference', 'preferences', 'forget', 'note that', 'keep in mind', 'my rules'],
   coActivate: [],
-  tools: ['memory_write'],
+  tools: ['memory_write', 'read_memory'],
   summary: 'User-owned facts, which always outrank anything Ninth inferred.',
   prompt: [
     'Two stores: the workspace facts the user owns, and observations Ninth made. The workspace always outranks what Ninth inferred.',

@@ -5,6 +5,7 @@ import { dailyLossCents, money, price, signedMoney } from '../../sizing'
 import { deskSetups, FAMILY_LABEL } from '../../setups'
 import type { Setup } from '../../setups'
 import type { JournalRow } from '../../journal'
+import { emptyMemory } from '../memory'
 import { sessionLabel } from '../../time'
 import { list, num, str } from '../args'
 import { fail, ok } from '../result'
@@ -320,6 +321,44 @@ const readAccount: ToolEntry = {
   },
 }
 
+const readMemory: ToolEntry = {
+  name: 'read_memory',
+  set: 'read',
+  tier: 1,
+  description: 'What the user wrote down, what Ninth observed, and the sequences it saved',
+  args: {},
+  run: (_args, ctx) => {
+    const memory = ctx.memory ?? emptyMemory()
+    const { workspace, observations, learnings } = memory
+    return ok(
+      {
+        workspace: {
+          facts: workspace.facts,
+          preferences: workspace.preferences,
+          decisions: workspace.decisions,
+        },
+        observations: observations.slice(-10).map((observation) => ({
+          section: observation.section,
+          text: observation.text,
+          session: observation.session,
+        })),
+        frozenSessions: [...new Set(observations.map((observation) => observation.session))],
+        learnings: learnings.map((learning) => ({
+          id: learning.id,
+          trigger: learning.trigger,
+          guidance: learning.guidance,
+          sequence: learning.sequence,
+          success: learning.success,
+          failure: learning.failure,
+          uses: learning.success + learning.failure,
+        })),
+        note: 'The workspace is the user\'s own words and outranks observations. A learning changes what you suggest reading, never a verdict, a limit or a permission.',
+      },
+      ['memory'],
+    )
+  },
+}
+
 export const READ_TOOLS: ToolEntry[] = [
   getQuote,
   listLevels,
@@ -328,4 +367,5 @@ export const READ_TOOLS: ToolEntry[] = [
   readJournal,
   readNews,
   readAccount,
+  readMemory,
 ]

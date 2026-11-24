@@ -160,7 +160,15 @@ export function route(input: RouteInput, skills: SkillDef[] = SKILLS): RoutedSki
  * Always callable, whatever routed: the meta tools that drive the harness and
  * the two reads every turn needs to stay honest about the desk.
  */
-export const ALWAYS_TOOLS: readonly string[] = ['activate_skills', 'tool_search', 'ask_user', 'route_why', 'get_quote', 'read_account']
+export const ALWAYS_TOOLS: readonly string[] = [
+  'activate_skills',
+  'tool_search',
+  'ask_user',
+  'route_why',
+  'get_quote',
+  'read_account',
+  'read_memory',
+]
 
 /** The tools the routed skills allow, filtered to tools that actually exist yet. */
 export function allowedTools(routed: RoutedSkill[]): string[] {

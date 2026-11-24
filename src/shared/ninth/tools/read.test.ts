@@ -18,8 +18,8 @@ function reason(outcome: ToolOutcome): string {
 type Row = Record<string, unknown>
 
 describe('the read set', () => {
-  test('is seven tools, every one tier 1 and side-effect free', () => {
-    expect(READ_TOOLS).toHaveLength(7)
+  test('is eight tools, every one tier 1 and side-effect free', () => {
+    expect(READ_TOOLS).toHaveLength(8)
     for (const tool of READ_TOOLS) {
       expect(tool.set).toBe('read')
       expect(tool.tier).toBe(1)
@@ -173,6 +173,45 @@ describe('read_news', () => {
     expect(result.skipped).toEqual(['DOGE'])
     expect(items.every((item) => item.symbol === 'TSLA')).toBe(true)
     expect(String(result.note)).toContain('fictional')
+  })
+})
+
+describe('read_memory', () => {
+  test('says nothing is remembered rather than describing a store it does not have', () => {
+    const result = data(dispatch('read_memory', {}, testContext()))
+    expect(result.workspace).toEqual({ facts: [], preferences: [], decisions: [] })
+    expect(result.observations).toEqual([])
+    expect(result.learnings).toEqual([])
+  })
+
+  test('returns the workspace, the newest observations and the sample size of each learning', () => {
+    const ctx = testContext()
+    const result = data(
+      dispatch(
+        'read_memory',
+        {},
+        {
+          ...ctx,
+          memory: {
+            workspace: { facts: ['paper only'], preferences: ['no shorts before 10:00'], decisions: [] },
+            observations: Array.from({ length: 12 }, (_, index) => ({
+              id: `o${index}`,
+              section: 'note' as const,
+              text: `line ${index}`,
+              createdAt: '2026-11-19T14:35:00.000Z',
+              session: '2026-11-19',
+            })),
+            learnings: [
+              { id: 'l1', trigger: 'gate blocks', guidance: 'quote the rule', sequence: ['gate_check'], success: 7, failure: 3, lastUsed: null },
+            ],
+          },
+        },
+      ),
+    )
+    expect((result.workspace as Row).facts).toEqual(['paper only'])
+    expect((result.observations as Row[]).map((row) => row.text)[0]).toBe('line 2')
+    expect(result.frozenSessions).toEqual(['2026-11-19'])
+    expect((result.learnings as Row[])[0]).toMatchObject({ id: 'l1', uses: 10 })
   })
 })
 
