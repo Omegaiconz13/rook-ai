@@ -19,6 +19,9 @@ of it made every clone slow.
   cannot otherwise see: the verdict, the mobile desk, the journal with rows in it.
 - **No bug shots.** Before/after captures of a hover fix belong in a commit message or
   the pull request, not in the repository.
+- **The other 196 captures are gone from the tree, not from history.** `artifacts/` is ignored;
+  the old PNGs remain in commits made before that, so `.git` is still 36 MB. Purging them needs a
+  history rewrite — `01-inventory.md` F3 has the command and the reason it is not automatic.
 - **Regenerate, do not accumulate.** Capture at the sizes above, strip metadata, and
   replace the file — a second file for the same screen is how `artifacts/` happened.
 

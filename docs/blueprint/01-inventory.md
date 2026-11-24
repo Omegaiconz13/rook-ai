@@ -127,7 +127,18 @@ that ship.
 
 **Action taken:** six representative screenshots (872 kB) moved to `docs/media/` and documented in
 `docs/MEDIA.md`; `artifacts/` removed from the index and ignored, so it cannot regrow. The files stay
-on the machine that captured them, out of history.
+on the machine that captured them, out of the tree.
+
+**What that does and does not do.** The tree no longer carries them and no clone has to check them out,
+but history still does: `git count-objects -vH` reports `size-pack: 34.13 MiB` across 34 commits with
+193 old artifact blobs, so a fresh clone still downloads the packed history. Purging it means
+rewriting published history — a separate, irreversible decision, not part of hygiene:
+
+```bash
+pipx install git-filter-repo
+git filter-repo --path artifacts --invert-paths --force
+git push --force-with-lease origin main   # every clone and fork must re-clone
+```
 
 ### F4 — The route table is code, so nothing can test it  *(fixed)*
 
